@@ -45,9 +45,6 @@ router.post('/sync', async (req, res, next) => {
         avatar_url: avatarUrl,
         subscription_tier: 'free',
         onboarding_completed: false,
-        // Password is not used with Clerk but model might still have validation for older accounts
-        // We set a random string just in case
-        password: Math.random().toString(36).slice(-12),
       });
     }
 

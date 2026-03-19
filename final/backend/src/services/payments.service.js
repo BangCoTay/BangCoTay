@@ -12,6 +12,21 @@ if (config.stripe.secretKey) {
 const createCheckout = async (userId, { priceId, tier }) => {
   if (!stripe) throw new Error('Stripe not configured');
 
+  const allowedTiers = ['starter', 'premium'];
+  if (!allowedTiers.includes(tier)) {
+    const error = new Error('Invalid subscription tier');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const expectedPriceId =
+    tier === 'starter' ? config.stripe.priceIdStarter : config.stripe.priceIdPremium;
+  if (expectedPriceId && priceId !== expectedPriceId) {
+    const error = new Error('Invalid price for selected tier');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const user = await User.findById(userId).select('email');
   if (!user) {
     const error = new Error('User not found');
@@ -83,17 +98,36 @@ const handleCheckoutCompleted = async (session) => {
   const customerId = session.customer;
   const subscriptionId = session.subscription;
 
-  if (!userId) return;
+  if (!userId) {
+    return;
+  }
+
+  const user = await User.findById(userId).select('_id');
+  if (!user) {
+    return;
+  }
 
   await User.findByIdAndUpdate(userId, { stripe_customer_id: customerId });
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const priceId = subscription.items.data[0].price.id;
   const tier = session.metadata?.tier || 'starter';
+
+  const allowedTiers = ['starter', 'premium'];
+  if (!allowedTiers.includes(tier)) {
+    return;
+  }
+
+  const expectedPriceId =
+    tier === 'starter' ? config.stripe.priceIdStarter : config.stripe.priceIdPremium;
+  if (expectedPriceId && priceId !== expectedPriceId) {
+    return;
+  }
 
   await Subscription.create({
     user_id: userId,
     stripe_subscription_id: subscriptionId,
-    stripe_price_id: subscription.items.data[0].price.id,
+    stripe_price_id: priceId,
     tier,
     status: subscription.status,
     current_period_start: new Date(subscription.current_period_start * 1000),

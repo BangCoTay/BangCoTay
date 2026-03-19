@@ -249,11 +249,14 @@ const generatePlan = async (userId, onboardingDataId, subscriptionTier) => {
   const usedQuitTasks = new Set();
   const usedAdoptTasks = new Set();
 
+  const dayPlansToInsert = [];
+  const tasksToInsert = [];
+
   for (let day = 1; day <= 30; day++) {
     const difficulty = getDifficulty(day);
     const unlocked = day <= daysToUnlock;
 
-    const dayPlan = await DayPlan.create({
+    dayPlansToInsert.push({
       plan_id: plan._id,
       day_number: day,
       unlocked,
@@ -269,8 +272,10 @@ const generatePlan = async (userId, onboardingDataId, subscriptionTier) => {
 
     usedQuitTasks.add(quitTask);
 
-    await Task.create({
-      day_plan_id: dayPlan._id,
+    // Placeholder for day_plan_id, will be filled after day plans are inserted
+    tasksToInsert.push({
+      _dayNumber: day,
+      day_plan_id: null,
       user_id: userId,
       task_order: 1,
       task_type: 'quit',
@@ -291,8 +296,9 @@ const generatePlan = async (userId, onboardingDataId, subscriptionTier) => {
 
       usedAdoptTasks.add(adoptTask);
 
-      await Task.create({
-        day_plan_id: dayPlan._id,
+      tasksToInsert.push({
+        _dayNumber: day,
+        day_plan_id: null,
         user_id: userId,
         task_order: 2,
         task_type: 'adopt',
@@ -309,8 +315,9 @@ const generatePlan = async (userId, onboardingDataId, subscriptionTier) => {
         "Write one thing you're proud of today",
       ];
 
-      await Task.create({
-        day_plan_id: dayPlan._id,
+      tasksToInsert.push({
+        _dayNumber: day,
+        day_plan_id: null,
         user_id: userId,
         task_order: 2,
         task_type: 'adopt',
@@ -320,6 +327,25 @@ const generatePlan = async (userId, onboardingDataId, subscriptionTier) => {
       });
     }
   }
+
+  // Insert all day plans in one batch
+  const createdDayPlans = await DayPlan.insertMany(dayPlansToInsert);
+
+  // Map day number to created day plan id
+  const dayNumberToId = new Map();
+  createdDayPlans.forEach((dp) => {
+    dayNumberToId.set(dp.day_number, dp._id);
+  });
+
+  // Attach correct day_plan_id to each task and remove helper field
+  const finalizedTasks = tasksToInsert.map((task) => ({
+    ...task,
+    day_plan_id: dayNumberToId.get(task._dayNumber),
+    _dayNumber: undefined,
+  }));
+
+  // Insert all tasks in one batch
+  await Task.insertMany(finalizedTasks);
 
   await UserProgress.create({
     user_id: userId,

@@ -12,9 +12,28 @@ const getTasks = async (userId, dayNumber, completed) => {
   let tasks;
 
   if (dayNumber !== undefined) {
-    // Find day plans matching the day number
-    const dayPlans = await DayPlan.find({ day_number: dayNumber }).select('_id').lean();
+    // Find the active plan for this user and day plans matching the day number
+    const activePlan = await require('../models/Plan').findOne({
+      user_id: userId,
+      is_active: true,
+    }).select('_id');
+
+    if (!activePlan) {
+      return [];
+    }
+
+    const dayPlans = await DayPlan.find({
+      plan_id: activePlan._id,
+      day_number: dayNumber,
+    })
+      .select('_id')
+      .lean();
+
     const dayPlanIds = dayPlans.map((dp) => dp._id);
+    if (dayPlanIds.length === 0) {
+      return [];
+    }
+
     filter.day_plan_id = { $in: dayPlanIds };
   }
 
