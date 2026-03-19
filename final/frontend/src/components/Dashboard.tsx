@@ -1,19 +1,24 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AICoachPanel } from "@/components/AICoachPanel";
 import { PlanPanel } from "@/components/PlanPanel";
 import { QuotesPanel } from "@/components/QuotesPanel";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { useLogout } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUsers";
-import { Sparkles, LogOut, Crown, Loader2 } from "lucide-react";
+import { Sparkles, LogOut, Crown, Loader2, Zap } from "lucide-react";
 
 export function Dashboard() {
   const logout = useLogout();
   const { data: userProfile, isLoading } = useUserProfile();
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout.mutate();
   };
+
+  const showUpgradeButton = userProfile?.subscriptionTier === "free";
 
   if (isLoading) {
     return (
@@ -39,6 +44,17 @@ export function Dashboard() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Upgrade button */}
+              {showUpgradeButton && (
+                <button
+                  onClick={() => setIsUpgradeModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium hover:opacity-90 transition-all"
+                >
+                  <Zap className="w-4 h-4" />
+                  <span className="hidden sm:inline">Upgrade</span>
+                </button>
+              )}
+
               {/* Subscription badge */}
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary">
                 {userProfile?.subscriptionTier === "premium" && (
@@ -102,6 +118,12 @@ export function Dashboard() {
           </motion.div>
         </div>
       </main>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+      />
     </div>
   );
 }

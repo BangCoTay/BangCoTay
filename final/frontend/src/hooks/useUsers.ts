@@ -24,8 +24,10 @@ export interface UserSubscriptionInfo {
   cancelAtPeriodEnd?: boolean;
   features: {
     daysUnlocked: number;
+    aiMessagesTotal: number | null;
     aiMessagesPerDay: number | null;
     quoteRegenerationsPerDay: number | null;
+    hasAICompanion: boolean;
   };
 }
 
@@ -45,11 +47,17 @@ function normalizeUserProfile(raw: any): UserProfile {
 function normalizeUserSubscription(raw: any): UserSubscriptionInfo {
   const aiMessagesPerDayRaw = raw?.limits?.aiMessagesPerDay;
   const quoteRegenerationsPerDayRaw = raw?.limits?.quoteRegenerationsPerDay;
+  const aiMessagesTotalRaw = raw?.limits?.aiMessagesTotal;
 
   const aiMessagesPerDay =
     typeof aiMessagesPerDayRaw === 'number' && aiMessagesPerDayRaw === -1
       ? null
       : aiMessagesPerDayRaw ?? null;
+
+  const aiMessagesTotal =
+    typeof aiMessagesTotalRaw === 'number' && aiMessagesTotalRaw === -1
+      ? null
+      : aiMessagesTotalRaw ?? null;
 
   const quoteRegenerationsPerDay =
     typeof quoteRegenerationsPerDayRaw === 'number' &&
@@ -64,8 +72,10 @@ function normalizeUserSubscription(raw: any): UserSubscriptionInfo {
     cancelAtPeriodEnd: raw.cancelAtPeriodEnd ?? raw.cancel_at_period_end,
     features: {
       daysUnlocked: raw.limits?.daysUnlocked ?? raw.limits?.days_unlocked ?? 0,
+      aiMessagesTotal,
       aiMessagesPerDay,
       quoteRegenerationsPerDay,
+      hasAICompanion: raw.limits?.hasAICompanion ?? raw.limits?.has_ai_companion ?? false,
     },
   };
 }

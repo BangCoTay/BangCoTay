@@ -24,38 +24,36 @@ export function PricingSection() {
     },
     {
       name: 'Starter',
-      price: '$4.99',
-      period: '/month',
-      description: 'Most popular choice',
+      price: '$9.99',
+      period: 'forever',
+      description: 'Best value, one-time',
       icon: Zap,
       color: 'from-primary to-accent',
       features: [
         'Full 30-day plan',
-        '20 AI messages/month',
-        'All motivation quotes',
-        'Detailed progress analytics',
-        'Habit tracking',
-        'Priority support',
+        '30 AI coach messages',
+        'Unlimited quote generation',
+        'Progress tracking',
       ],
-      cta: 'Start Free Trial',
+      cta: 'Get Starter',
       popular: true,
     },
     {
       name: 'Premium',
-      price: '$9.99',
-      period: '/month',
-      description: 'For serious commitment',
+      price: '$19.99',
+      period: 'forever',
+      description: 'Full experience',
       icon: Crown,
       color: 'from-amber-500 to-orange-500',
       features: [
-        'Everything in Starter',
-        'Unlimited AI chat',
-        'Social support (GF/Friends/Family)',
-        'Custom habit plans',
-        'Early access to features',
-        'Lifetime member badge',
+        'Full 30-day plan',
+        '100 AI coach messages',
+        'Unlimited quote generation',
+        'AI Companion (Friend/Family/Girlfriend)',
+        'Advanced analytics',
+        'Priority support',
       ],
-      cta: 'Go Premium',
+      cta: 'Get Premium',
       popular: false,
     },
   ];
@@ -150,7 +148,7 @@ export function PricingSection() {
           viewport={{ once: true }}
         >
           <p className="text-muted-foreground">
-            🔒 30-day money-back guarantee • Cancel anytime • No hidden fees
+            🔒 One-time payment • No subscriptions • No hidden fees
           </p>
         </motion.div>
       </div>

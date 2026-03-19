@@ -7,23 +7,17 @@ const { SUBSCRIPTION_LIMITS } = require('../constants/subscription-limits');
 const sendMessage = async (userId, { content, coachPersona }, subscriptionTier) => {
   const limits = SUBSCRIPTION_LIMITS[subscriptionTier] || SUBSCRIPTION_LIMITS.free;
 
-  // Check message limits
+  // Check TOTAL lifetime message limits (not per-day)
   const progress = await UserProgress.findOne({ user_id: userId });
+  const totalUsed = progress?.ai_messages_used ?? 0;
+  const totalLimit = limits.aiMessagesTotal;
 
-  if (progress) {
-    const today = new Date().toISOString().split('T')[0];
-    let messagesUsedToday = progress.ai_messages_used;
-    if (progress.last_activity_date !== today) {
-      messagesUsedToday = 0;
-    }
-
-    if (limits.aiMessagesPerDay !== -1 && messagesUsedToday >= limits.aiMessagesPerDay) {
-      const error = new Error(
-        `Daily AI message limit reached (${limits.aiMessagesPerDay} messages). Upgrade to send more messages.`
-      );
-      error.statusCode = 403;
-      throw error;
-    }
+  if (totalLimit !== undefined && totalLimit !== -1 && totalUsed >= totalLimit) {
+    const error = new Error(
+      `AI message limit reached (${totalLimit} total messages). Upgrade to send more messages.`
+    );
+    error.statusCode = 403;
+    throw error;
   }
 
   // Save user message
@@ -33,8 +27,11 @@ const sendMessage = async (userId, { content, coachPersona }, subscriptionTier) 
     content,
   });
 
-  // Get recent chat history (last 10 messages)
-  const recentMessages = await ChatMessage.find({ user_id: userId })
+  // Get recent chat history (last 10 assistant messages for context)
+  const recentMessages = await ChatMessage.find({
+    user_id: userId,
+    role: { $in: ['user', 'assistant'] },
+  })
     .sort({ created_at: -1 })
     .limit(10)
     .select('role content')
@@ -78,27 +75,40 @@ const sendMessage = async (userId, { content, coachPersona }, subscriptionTier) 
     model: aiResponse.model,
   });
 
-  // Update AI messages used count
+  // Update TOTAL AI messages used count (lifetime, not daily)
   if (progress) {
+    progress.ai_messages_used = totalUsed + 1;
+    // Update last_activity_date for streak tracking
     const today = new Date().toISOString().split('T')[0];
-    const messagesUsedToday =
-      progress.last_activity_date === today ? progress.ai_messages_used + 1 : 1;
-
-    progress.ai_messages_used = messagesUsedToday;
+    progress.last_activity_date = today;
     await progress.save();
-
-    const messagesRemaining =
-      limits.aiMessagesPerDay === -1 ? -1 : limits.aiMessagesPerDay - messagesUsedToday;
-
-    return { userMessage, assistantMessage, messagesRemaining };
   }
 
-  return { userMessage, assistantMessage };
+  const newTotal = totalUsed + 1;
+  const messagesRemaining =
+    totalLimit === -1 || totalLimit === undefined ? -1 : Math.max(0, totalLimit - newTotal);
+
+  return { userMessage, assistantMessage, messagesRemaining };
 };
 
-const getMessages = async (userId, limit = 50, offset = 0) => {
-  const total = await ChatMessage.countDocuments({ user_id: userId });
-  const messages = await ChatMessage.find({ user_id: userId })
+const getMessages = async (userId, role, limit = 50, offset = 0) => {
+  // Build filter - optionally filter by role (for persona-specific feeds)
+  const filter = { user_id: userId };
+
+  if (role === 'coach') {
+    // AI Coach feed: user messages + assistant messages
+    filter.role = { $in: ['user', 'assistant'] };
+  } else if (role === 'friend') {
+    filter.role = 'friend';
+  } else if (role === 'family') {
+    filter.role = 'family';
+  } else if (role === 'girlfriend') {
+    filter.role = 'girlfriend';
+  }
+  // If no role specified, return all messages (backward compat)
+
+  const total = await ChatMessage.countDocuments(filter);
+  const messages = await ChatMessage.find(filter)
     .sort({ created_at: 1 })
     .skip(offset)
     .limit(limit)
