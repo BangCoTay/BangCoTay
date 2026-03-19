@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api-client';
-import { useAuth } from '@clerk/clerk-react';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import apiClient from "@/lib/api-client";
+import { useAuth } from "@clerk/clerk-react";
 
 export interface Task {
   id: string;
@@ -37,11 +37,13 @@ function normalizeTask(raw: any): Task {
 export function useTasks(dayNumber?: number, completed?: boolean) {
   const { userId, isLoaded } = useAuth();
   return useQuery({
-    queryKey: ['tasks', { dayNumber, completed }],
+    queryKey: ["tasks", { dayNumber, completed }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (dayNumber !== undefined) params.append('dayNumber', dayNumber.toString());
-      if (completed !== undefined) params.append('completed', completed.toString());
+      if (dayNumber !== undefined)
+        params.append("dayNumber", dayNumber.toString());
+      if (completed !== undefined)
+        params.append("completed", completed.toString());
 
       const response = await apiClient.get(`/tasks?${params.toString()}`);
       const rawTasks = response.data.data as any[];
@@ -64,9 +66,9 @@ export function useCompleteTask() {
       } as CompleteTaskResponse;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      queryClient.invalidateQueries({ queryKey: ['progress'] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: ["progress"] });
     },
   });
 }
@@ -80,9 +82,10 @@ export function useUncompleteTask() {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      queryClient.invalidateQueries({ queryKey: ['progress'] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+      queryClient.invalidateQueries({ queryKey: ["progress"] });
+      queryClient.invalidateQueries({ queryKey: ["chat", "messages"] });
     },
   });
 }
@@ -91,12 +94,18 @@ export function useUpdateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Task> }) => {
+    mutationFn: async ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: Partial<Task>;
+    }) => {
       const response = await apiClient.patch(`/tasks/${id}`, updates);
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
 }
@@ -109,7 +118,7 @@ export function useDeleteTask() {
       await apiClient.delete(`/tasks/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
 }

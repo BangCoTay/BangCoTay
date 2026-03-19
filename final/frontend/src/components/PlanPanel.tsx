@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useCurrentPlan } from '@/hooks/usePlans';
-import { useCompleteTask } from '@/hooks/useTasks';
-import { useProgress } from '@/hooks/useProgress';
-import { useOnboarding } from '@/hooks/useOnboarding';
-import { useUserSubscription } from '@/hooks/useUsers';
-import { COACHES, ADDICTIONS, HEALTHY_HABITS } from '@/types';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useCurrentPlan } from "@/hooks/usePlans";
+import { useCompleteTask, useUncompleteTask } from "@/hooks/useTasks";
+import { useProgress } from "@/hooks/useProgress";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { useUserSubscription } from "@/hooks/useUsers";
+import { COACHES, ADDICTIONS } from "@/types";
 import {
   Check,
   Lock,
@@ -13,10 +13,10 @@ import {
   ChevronUp,
   Sparkles,
   Loader2,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import confetti from 'canvas-confetti';
-import { useToast } from '@/hooks/use-toast';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import confetti from "canvas-confetti";
+import { useToast } from "@/hooks/use-toast";
 
 export function PlanPanel() {
   const { data: planData, isLoading: planLoading } = useCurrentPlan();
@@ -24,53 +24,51 @@ export function PlanPanel() {
   const { data: onboardingData } = useOnboarding();
   const { data: subscription } = useUserSubscription();
   const completeTask = useCompleteTask();
+  const uncompleteTask = useUncompleteTask();
   const { toast } = useToast();
 
   const [expandedDay, setExpandedDay] = useState<number>(1);
 
-  const coach = onboardingData?.niche ? COACHES[onboardingData.niche] : COACHES.health;
+  const coach = onboardingData?.niche
+    ? COACHES[onboardingData.niche]
+    : COACHES.health;
   const plan = planData?.dayPlans || [];
-  const subscriptionTier = subscription?.tier || 'free';
+  const subscriptionTier = subscription?.tier || "free";
 
-  const handleTaskComplete = async (taskId: string, taskDay: number) => {
+  const handleToggleTask = async (taskId: string, currentCompleted: boolean) => {
     try {
-      // Trigger confetti
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#14b8a6', '#f97316', '#8b5cf6', '#ec4899'],
-      });
-
-      const result = await completeTask.mutateAsync(taskId);
-
-      // Show celebration message if provided
-      if (result.celebrationMessage) {
-        toast({
-          title: '🎉 Amazing!',
-          description: result.celebrationMessage,
+      if (!currentCompleted) {
+        // Trigger confetti ONLY on completion
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ["#14b8a6", "#f97316", "#8b5cf6", "#ec4899"],
         });
+
+        await completeTask.mutateAsync(taskId);
+      } else {
+        await uncompleteTask.mutateAsync(taskId);
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to complete task. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: `Failed to ${currentCompleted ? "uncomplete" : "complete"} task. Please try again.`,
+        variant: "destructive",
       });
     }
   };
 
   const getDayProgress = (day: number) => {
-    const dayPlan = plan.find(d => d.dayNumber === day);
+    const dayPlan = plan.find((d) => d.dayNumber === day);
     if (!dayPlan || !dayPlan.tasks) return 0;
-    const completed = dayPlan.tasks.filter(t => t.completed).length;
+    const completed = dayPlan.tasks.filter((t) => t.completed).length;
     return (completed / dayPlan.tasks.length) * 100;
   };
 
   const totalProgress = progress?.completionRate || 0;
 
-  const addiction = ADDICTIONS.find(a => a.id === onboardingData?.addiction);
-  const healthyHabit = HEALTHY_HABITS.find(h => h.id === onboardingData?.healthyHabit);
+  const addiction = ADDICTIONS.find((a) => a.id === onboardingData?.addiction);
 
   if (planLoading) {
     return (
@@ -96,12 +94,13 @@ export function PlanPanel() {
           <div>
             <h2 className="text-2xl font-bold">Your 30-Day Plan</h2>
             <p className="text-sm text-muted-foreground">
-              Quit {addiction?.label || 'bad habits'}
-              {healthyHabit && healthyHabit.id !== 'none' && ` • Build ${healthyHabit.label}`}
+              Quit {addiction?.label || "bad habits"}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">{Math.round(totalProgress)}%</p>
+            <p className="text-2xl font-bold text-primary">
+              {Math.round(totalProgress)}%
+            </p>
             <p className="text-xs text-muted-foreground">Complete</p>
           </div>
         </div>
@@ -131,26 +130,31 @@ export function PlanPanel() {
               className={cn(
                 "day-card",
                 isLocked && "locked",
-                isComplete && "border-success/50"
+                isComplete && "border-success/50",
               )}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: dayPlan.dayNumber * 0.02 }}
             >
               <button
-                onClick={() => !isLocked && setExpandedDay(isExpanded ? 0 : dayPlan.dayNumber)}
+                onClick={() =>
+                  !isLocked &&
+                  setExpandedDay(isExpanded ? 0 : dayPlan.dayNumber)
+                }
                 className="w-full flex items-center justify-between"
                 disabled={isLocked}
               >
                 <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg",
-                    isComplete
-                      ? "bg-success text-success-foreground"
-                      : isLocked
-                        ? "bg-muted text-muted-foreground"
-                        : "bg-primary/10 text-primary"
-                  )}>
+                  <div
+                    className={cn(
+                      "w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg",
+                      isComplete
+                        ? "bg-success text-success-foreground"
+                        : isLocked
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-primary/10 text-primary",
+                    )}
+                  >
                     {isComplete ? (
                       <Check className="w-6 h-6" />
                     ) : isLocked ? (
@@ -162,7 +166,9 @@ export function PlanPanel() {
                   <div className="text-left">
                     <p className="font-semibold">Day {dayPlan.dayNumber}</p>
                     <p className="text-xs text-muted-foreground">
-                      {isLocked ? 'Upgrade to unlock' : `${dayPlan.tasks?.filter(t => t.completed).length || 0}/${dayPlan.tasks?.length || 0} tasks`}
+                      {isLocked
+                        ? "Upgrade to unlock"
+                        : `${dayPlan.tasks?.filter((t) => t.completed).length || 0}/${dayPlan.tasks?.length || 0} tasks`}
                     </p>
                   </div>
                 </div>
@@ -190,51 +196,42 @@ export function PlanPanel() {
                 {isExpanded && !isLocked && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
                     <div className="mt-4 pt-4 border-t space-y-3">
                       {dayPlan.tasks?.map((task) => (
-                        <div
+                        <button
                           key={task.id}
+                          onClick={() => handleToggleTask(task.id, task.completed)}
+                          disabled={completeTask.isPending || uncompleteTask.isPending}
                           className={cn(
-                            "task-card flex items-start gap-4",
-                            task.completed && "completed"
+                            "task-card w-full text-left flex items-center justify-between gap-4 transition-all hover:bg-primary/5",
+                            task.completed && "completed bg-success/5 border-success/20",
                           )}
                         >
-                          <button
-                            onClick={() => !task.completed && handleTaskComplete(task.id, dayPlan.dayNumber)}
-                            disabled={task.completed || completeTask.isPending}
+                          <p
                             className={cn(
-                              "mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all flex-shrink-0",
+                              "text-sm font-medium flex-1",
+                              task.completed &&
+                                "line-through text-muted-foreground",
+                            )}
+                          >
+                            {task.title}
+                          </p>
+                          <div
+                            className={cn(
+                              "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all flex-shrink-0",
                               task.completed
                                 ? "bg-success border-success text-success-foreground"
-                                : "border-primary/30 hover:border-primary hover:bg-primary/10"
+                                : "border-primary/30",
                             )}
                           >
                             {task.completed && <Check className="w-4 h-4" />}
-                          </button>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className={cn(
-                                "text-xs px-2 py-0.5 rounded-full font-medium",
-                                task.type === 'quit'
-                                  ? "bg-destructive/10 text-destructive"
-                                  : "bg-success/10 text-success"
-                              )}>
-                                {task.type === 'quit' ? '🚫 Quit' : '✨ Build'}
-                              </span>
-                            </div>
-                            <p className={cn(
-                              "text-sm font-medium",
-                              task.completed && "line-through text-muted-foreground"
-                            )}>
-                              {task.title}
-                            </p>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </motion.div>
@@ -246,7 +243,7 @@ export function PlanPanel() {
       </div>
 
       {/* Upgrade CTA for free users */}
-      {subscriptionTier === 'free' && (
+      {subscriptionTier === "free" && (
         <motion.div
           className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20"
           initial={{ opacity: 0, y: 20 }}
@@ -258,15 +255,14 @@ export function PlanPanel() {
             </div>
             <div className="flex-1">
               <p className="font-semibold text-sm">Unlock all 30 days</p>
-              <p className="text-xs text-muted-foreground">Get the full plan + unlimited AI coach</p>
+              <p className="text-xs text-muted-foreground">
+                Get the full plan + unlimited AI coach
+              </p>
             </div>
-            <button className="btn-accent text-sm">
-              Upgrade
-            </button>
+            <button className="btn-accent text-sm">Upgrade</button>
           </div>
         </motion.div>
       )}
     </div>
   );
 }
-

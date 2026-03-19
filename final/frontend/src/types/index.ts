@@ -10,14 +10,11 @@ export type Severity = 'mild' | 'moderate' | 'severe';
 
 export type PainPoint = 'time' | 'energy' | 'confidence' | 'sleep' | 'relationships' | 'money';
 
-export type HealthyHabit = 'reading' | 'workout' | 'meditation' | 'learning' | 'journaling' | 'sleep' | 'none';
-
 export interface OnboardingData {
   niche: Niche | null;
   addiction: string | null;
   severity: Severity | null;
   painPoints: PainPoint[];
-  healthyHabit: HealthyHabit | null;
 }
 
 export interface Task {
@@ -103,16 +100,6 @@ export const ADDICTIONS: AddictionType[] = [
   { id: 'excessive-gaming', label: 'Excessive Gaming', niche: 'gaming' },
   { id: 'rage-quitting', label: 'Rage / Tilting', niche: 'gaming' },
   { id: 'gaming-over-sleep', label: 'Gaming Over Sleep', niche: 'gaming' },
-];
-
-export const HEALTHY_HABITS: { id: HealthyHabit; label: string; icon: string }[] = [
-  { id: 'reading', label: 'Reading', icon: '📖' },
-  { id: 'workout', label: 'Workout', icon: '💪' },
-  { id: 'meditation', label: 'Meditation', icon: '🧘' },
-  { id: 'learning', label: 'Learning a Skill', icon: '🎯' },
-  { id: 'journaling', label: 'Journaling', icon: '✍️' },
-  { id: 'sleep', label: 'Sleep Earlier', icon: '😴' },
-  { id: 'none', label: 'No, just help me quit', icon: '❌' },
 ];
 
 export const PAIN_POINTS: { id: PainPoint; label: string; icon: string }[] = [

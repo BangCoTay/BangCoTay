@@ -1,11 +1,11 @@
-import { motion } from 'framer-motion';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { AICoachPanel } from '@/components/AICoachPanel';
-import { PlanPanel } from '@/components/PlanPanel';
-import { QuotesPanel } from '@/components/QuotesPanel';
-import { useLogout } from '@/hooks/useAuth';
-import { useUserProfile } from '@/hooks/useUsers';
-import { Sparkles, LogOut, Crown, Loader2 } from 'lucide-react';
+import { motion } from "framer-motion";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { AICoachPanel } from "@/components/AICoachPanel";
+import { PlanPanel } from "@/components/PlanPanel";
+import { QuotesPanel } from "@/components/QuotesPanel";
+import { useLogout } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUsers";
+import { Sparkles, LogOut, Crown, Loader2 } from "lucide-react";
 
 export function Dashboard() {
   const logout = useLogout();
@@ -33,17 +33,19 @@ export function Dashboard() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-gradient-primary">Resetify</span>
+              <span className="text-xl font-bold text-gradient-primary">
+                Resetify
+              </span>
             </div>
 
             <div className="flex items-center gap-3">
               {/* Subscription badge */}
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary">
-                {userProfile?.subscriptionTier === 'premium' && (
+                {userProfile?.subscriptionTier === "premium" && (
                   <Crown className="w-4 h-4 text-accent" />
                 )}
                 <span className="text-sm font-medium capitalize">
-                  {userProfile?.subscriptionTier || 'free'}
+                  {userProfile?.subscriptionTier || "free"}
                 </span>
               </div>
 
@@ -68,10 +70,10 @@ export function Dashboard() {
 
       {/* Main content - 3 column layout */}
       <main className="max-w-[1800px] mx-auto px-4 sm:px-6 py-6">
-        <div className="grid lg:grid-cols-12 gap-6 h-[calc(100vh-120px)]">
+        <div className="grid lg:grid-cols-[3.5fr_5fr_3.5fr] gap-6 h-[calc(100vh-120px)]">
           {/* Left panel - AI Coach */}
           <motion.div
-            className="lg:col-span-3 h-full"
+            className="h-full"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
@@ -81,7 +83,7 @@ export function Dashboard() {
 
           {/* Center panel - Plan */}
           <motion.div
-            className="lg:col-span-6 h-full overflow-hidden"
+            className="h-full overflow-hidden"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -91,7 +93,7 @@ export function Dashboard() {
 
           {/* Right panel - Quotes */}
           <motion.div
-            className="lg:col-span-3 h-full"
+            className="h-full"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}

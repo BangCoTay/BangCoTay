@@ -9,11 +9,13 @@ function normalizeCurrentPlanResponse(raw: any) {
   const normalizedDayPlans =
     raw.dayPlans?.map((dayPlan: any) => ({
       ...dayPlan,
+      id: dayPlan.id ?? dayPlan._id,
       // Ensure camelCase field used throughout the UI
       dayNumber: dayPlan.dayNumber ?? dayPlan.day_number,
       // Normalize tasks collection
       tasks: dayPlan.tasks?.map((task: any) => ({
         ...task,
+        id: task.id ?? task._id,
         // Map snake_case to camelCase expected by components
         type: task.type ?? task.task_type,
         completedAt: task.completedAt ?? task.completed_at,

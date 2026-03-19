@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Niche, Severity, PainPoint, HealthyHabit } from '@/types';
+import type { Niche, Severity, PainPoint } from '@/types';
 
 // UI-only state - all business logic moved to backend
 interface AppState {
@@ -15,7 +15,6 @@ interface AppState {
     addiction: string | null;
     severity: Severity | null;
     painPoints: PainPoint[];
-    healthyHabit: HealthyHabit | null;
   };
 
   // UI Actions
@@ -30,7 +29,6 @@ interface AppState {
   setAddiction: (addiction: string) => void;
   setSeverity: (severity: Severity) => void;
   togglePainPoint: (painPoint: PainPoint) => void;
-  setHealthyHabit: (habit: HealthyHabit) => void;
   clearTempOnboardingData: () => void;
 
   // Reset UI state
@@ -42,7 +40,6 @@ const initialTempOnboardingData = {
   addiction: null,
   severity: null,
   painPoints: [],
-  healthyHabit: null,
 };
 
 export const useAppStore = create<AppState>()(
@@ -84,9 +81,6 @@ export const useAppStore = create<AppState>()(
           : [...currentPoints, painPoint];
         return { tempOnboardingData: { ...state.tempOnboardingData, painPoints: newPoints } };
       }),
-      setHealthyHabit: (habit) => set((state) => ({
-        tempOnboardingData: { ...state.tempOnboardingData, healthyHabit: habit }
-      })),
       clearTempOnboardingData: () => set({ tempOnboardingData: initialTempOnboardingData }),
 
       resetApp: () => {
