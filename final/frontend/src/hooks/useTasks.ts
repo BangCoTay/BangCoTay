@@ -22,6 +22,18 @@ export interface CompleteTaskResponse {
   celebrationMessage?: string;
 }
 
+function normalizeTask(raw: any): Task {
+  return {
+    id: raw.id ?? raw._id,
+    dayNumber: raw.dayNumber ?? raw.day_number,
+    title: raw.title,
+    description: raw.description,
+    type: raw.type ?? raw.task_type,
+    completed: raw.completed,
+    completedAt: raw.completedAt ?? raw.completed_at,
+  };
+}
+
 export function useTasks(dayNumber?: number, completed?: boolean) {
   const { userId, isLoaded } = useAuth();
   return useQuery({
@@ -32,7 +44,8 @@ export function useTasks(dayNumber?: number, completed?: boolean) {
       if (completed !== undefined) params.append('completed', completed.toString());
 
       const response = await apiClient.get(`/tasks?${params.toString()}`);
-      return response.data as Task[];
+      const rawTasks = response.data.data as any[];
+      return rawTasks.map(normalizeTask);
     },
     enabled: isLoaded && !!userId,
   });
@@ -44,7 +57,11 @@ export function useCompleteTask() {
   return useMutation({
     mutationFn: async (taskId: string) => {
       const response = await apiClient.post(`/tasks/${taskId}/complete`);
-      return response.data as CompleteTaskResponse;
+      const raw = response.data.data;
+      return {
+        ...raw,
+        task: normalizeTask(raw.task),
+      } as CompleteTaskResponse;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -60,7 +77,7 @@ export function useUncompleteTask() {
   return useMutation({
     mutationFn: async (taskId: string) => {
       const response = await apiClient.post(`/tasks/${taskId}/uncomplete`);
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -76,7 +93,7 @@ export function useUpdateTask() {
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Task> }) => {
       const response = await apiClient.patch(`/tasks/${id}`, updates);
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });

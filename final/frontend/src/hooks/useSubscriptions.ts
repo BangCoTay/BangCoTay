@@ -73,7 +73,7 @@ export function useCurrentSubscription() {
     queryKey: ['subscriptions', 'current'],
     queryFn: async () => {
       const response = await apiClient.get('/subscriptions/current');
-      return normalizeSubscription(response.data);
+      return normalizeSubscription(response.data.data);
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
@@ -85,7 +85,7 @@ export function useCancelSubscription() {
   return useMutation({
     mutationFn: async () => {
       const response = await apiClient.post('/subscriptions/cancel');
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });

@@ -30,7 +30,7 @@ export interface ChatMessagesResponse {
 
 function normalizeChatMessage(raw: any): ChatMessage {
   return {
-    id: raw.id,
+    id: raw.id ?? raw._id,
     role: raw.role,
     content: raw.content,
     createdAt: raw.createdAt ?? raw.created_at,
@@ -73,7 +73,7 @@ export function useChatMessages(limit = 50, offset = 0) {
       const response = await apiClient.get(
         `/chat/messages?limit=${limit}&offset=${offset}`,
       );
-      return normalizeChatMessagesResponse(response.data);
+      return normalizeChatMessagesResponse(response.data.data);
     },
     enabled: isLoaded && !!userId,
     staleTime: 30 * 1000, // 30 seconds
@@ -86,7 +86,7 @@ export function useSendMessage() {
   return useMutation({
     mutationFn: async (content: string) => {
       const response = await apiClient.post('/chat/messages', { content });
-      return normalizeSendMessageResponse(response.data);
+      return normalizeSendMessageResponse(response.data.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chat', 'messages'] });
@@ -101,7 +101,7 @@ export function useClearChat() {
   return useMutation({
     mutationFn: async () => {
       const response = await apiClient.delete('/chat/messages');
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chat', 'messages'] });

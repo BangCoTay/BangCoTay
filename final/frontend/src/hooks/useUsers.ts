@@ -31,7 +31,7 @@ export interface UserSubscriptionInfo {
 
 function normalizeUserProfile(raw: any): UserProfile {
   return {
-    id: raw.id,
+    id: raw.id ?? raw._id,
     email: raw.email,
     fullName: raw.full_name ?? raw.fullName,
     avatarUrl: raw.avatar_url ?? raw.avatarUrl,
@@ -76,7 +76,7 @@ export function useUserProfile() {
     queryKey: ['users', 'profile'],
     queryFn: async () => {
       const response = await apiClient.get('/users/profile');
-      return normalizeUserProfile(response.data);
+      return normalizeUserProfile(response.data.data);
     },
     enabled: isLoaded && !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -89,7 +89,7 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (data: UpdateProfileRequest) => {
       const response = await apiClient.put('/users/profile', data);
-      return normalizeUserProfile(response.data);
+      return normalizeUserProfile(response.data.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users', 'profile'] });
@@ -104,7 +104,7 @@ export function useUserSubscription() {
     queryKey: ['users', 'subscription'],
     queryFn: async () => {
       const response = await apiClient.get('/users/subscription');
-      return normalizeUserSubscription(response.data);
+      return normalizeUserSubscription(response.data.data);
     },
     enabled: isLoaded && !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes

@@ -19,7 +19,7 @@ export function useCreateCheckout() {
   return useMutation({
     mutationFn: async (data: CreateCheckoutRequest) => {
       const response = await apiClient.post('/payments/create-checkout', data);
-      return response.data as CreateCheckoutResponse;
+      return response.data.data as CreateCheckoutResponse;
     },
     onSuccess: (data) => {
       // Redirect to Stripe checkout
@@ -32,7 +32,7 @@ export function useCustomerPortal() {
   return useMutation({
     mutationFn: async () => {
       const response = await apiClient.get('/payments/portal');
-      return response.data as CustomerPortalResponse;
+      return response.data.data as CustomerPortalResponse;
     },
     onSuccess: (data) => {
       // Redirect to Stripe customer portal

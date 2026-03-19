@@ -31,11 +31,11 @@ function normalizeQuotesResponse(raw: { quotes?: RawQuote[]; regenerationsRemain
   const rawQuotes = Array.isArray(raw) ? raw : raw.quotes ?? [];
 
   const quotes: Quote[] = rawQuotes.map((q: RawQuote) => ({
-    id: q.id,
-    content: q.text ?? q.content,
+    id: q.id ?? (q as any)._id,
+    content: q.text ?? q.content ?? '',
     category: q.category,
     isActive: q.isActive ?? q.is_active ?? true,
-    createdAt: q.createdAt ?? q.created_at,
+    createdAt: q.createdAt ?? q.created_at ?? new Date().toISOString(),
   }));
 
   let regenerationsRemaining: number | null =
@@ -57,7 +57,7 @@ export function useQuotes() {
     queryKey: ['quotes'],
     queryFn: async () => {
       const response = await apiClient.get('/quotes');
-      return normalizeQuotesResponse(response.data);
+      return normalizeQuotesResponse(response.data.data);
     },
     enabled: isLoaded && !!userId,
     staleTime: 60 * 60 * 1000, // 1 hour
@@ -70,7 +70,7 @@ export function useRegenerateQuotes() {
   return useMutation({
     mutationFn: async () => {
       const response = await apiClient.post('/quotes/regenerate');
-      return normalizeQuotesResponse(response.data);
+      return normalizeQuotesResponse(response.data.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });

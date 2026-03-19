@@ -9,7 +9,7 @@ export function useOnboarding() {
     queryKey: ['onboarding'],
     queryFn: async () => {
       const response = await apiClient.get('/onboarding');
-      return response.data;
+      return response.data.data;
     },
     enabled: isLoaded && !!userId,
     retry: false,
@@ -28,7 +28,7 @@ export function useSubmitOnboarding() {
         painPoints: data.painPoints,
         healthyHabit: data.healthyHabit,
       });
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['onboarding'] });

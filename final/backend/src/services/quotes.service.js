@@ -4,6 +4,15 @@ const UserProgress = require('../models/UserProgress');
 const quoteGenerator = require('./quote-generator.service');
 const { SUBSCRIPTION_LIMITS } = require('../constants/subscription-limits');
 
+const mapQuote = (quote) => ({
+  id: quote._id,
+  content: quote.text,
+  category: quote.category,
+  niche: quote.niche,
+  is_active: quote.is_active,
+  created_at: quote.created_at,
+});
+
 const getQuotes = async (userId, subscriptionTier) => {
   const quotes = await Quote.find({ user_id: userId, is_active: true })
     .sort({ created_at: -1 })
@@ -28,7 +37,10 @@ const getQuotes = async (userId, subscriptionTier) => {
       ? -1
       : limits.quoteRegenerationsPerDay - regenerationsToday;
 
-  return { quotes, regenerationsRemaining };
+  return { 
+    quotes: quotes.map(mapQuote), 
+    regenerationsRemaining 
+  };
 };
 
 const regenerateQuotes = async (userId, subscriptionTier) => {
@@ -90,10 +102,13 @@ const regenerateQuotes = async (userId, subscriptionTier) => {
         ? -1
         : limits.quoteRegenerationsPerDay - regenerationsToday;
 
-    return { quotes: savedQuotes, regenerationsRemaining };
+    return { 
+      quotes: savedQuotes.map(mapQuote), 
+      regenerationsRemaining 
+    };
   }
 
-  return { quotes: savedQuotes };
+  return { quotes: savedQuotes.map(mapQuote) };
 };
 
 const generateInitialQuotes = async (userId, subscriptionTier) => {
@@ -114,7 +129,7 @@ const generateInitialQuotes = async (userId, subscriptionTier) => {
   const limits = SUBSCRIPTION_LIMITS[subscriptionTier] || SUBSCRIPTION_LIMITS.free;
 
   return {
-    quotes: savedQuotes,
+    quotes: savedQuotes.map(mapQuote),
     regenerationsRemaining: limits.quoteRegenerationsPerDay,
   };
 };

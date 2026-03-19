@@ -46,14 +46,16 @@ const Index = () => {
     // Handle view routing based on authentication and onboarding status
     if (!isLoadingAuth) {
       if (!isAuthenticated) {
-        setCurrentView('landing');
+        if (currentView !== 'onboarding' && currentView !== 'landing') {
+          setCurrentView('landing');
+        }
       } else if (isAuthenticated && !isLoadingOnboarding && !onboardingData) {
         setCurrentView('onboarding');
       } else if (isAuthenticated && !isLoadingOnboarding && onboardingData) {
         setCurrentView('dashboard');
       }
     }
-  }, [isAuthenticated, isLoadingAuth, isLoadingOnboarding, onboardingData, setCurrentView]);
+  }, [isAuthenticated, isLoadingAuth, isLoadingOnboarding, onboardingData, setCurrentView, currentView]);
 
   if (isLoadingAuth) {
     return (
@@ -64,7 +66,8 @@ const Index = () => {
   }
 
   return (
-    <AnimatePresence mode="wait">
+    <>
+      <AnimatePresence mode="wait">
       <motion.div
         key={currentView}
         initial={{ opacity: 0 }}
@@ -76,8 +79,9 @@ const Index = () => {
         {currentView === 'onboarding' && <OnboardingFlow />}
         {currentView === 'dashboard' && <Dashboard />}
       </motion.div>
+      </AnimatePresence>
       {isAuthModalOpen && <AuthModal onClose={handleCloseAuthModal} />}
-    </AnimatePresence>
+    </>
   );
 };
 

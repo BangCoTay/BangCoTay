@@ -112,8 +112,28 @@ const getMessages = async (userId, limit = 50, offset = 0) => {
 };
 
 const deleteMessages = async (userId) => {
-  await ChatMessage.deleteMany({ user_id: userId });
-  return { success: true, message: 'Chat history cleared' };
+  return await ChatMessage.deleteMany({ user_id: userId });
 };
 
-module.exports = { sendMessage, getMessages, deleteMessages };
+const sendInitialMessage = async (userId, coachPersona = 'Alex') => {
+  const onboarding = await OnboardingData.findOne({ user_id: userId }).select('niche addiction');
+  
+  let welcomeText = `Hi there! I'm ${coachPersona}, your AI Coach. I've analyzed your onboarding and I'm ready to help you overcome your ${onboarding?.addiction || 'habits'} and level up your life. Shall we get started with Day 1?`;
+  
+  if (onboarding?.niche === 'digital') {
+    welcomeText = `Ready to reclaim your time from the digital noise? I'm ${coachPersona}, and I'll be guiding you through your digital detox journey. Let's start making every offline minute count.`;
+  } else if (onboarding?.niche === 'mental') {
+    welcomeText = `Hello! I'm ${coachPersona}. I'm here to support your mental well-being and help you build a more resilient mindset. You're not alone in this journey.`;
+  }
+  
+  const initialMessage = await ChatMessage.create({
+    user_id: userId,
+    role: 'assistant',
+    content: welcomeText,
+    sender_name: coachPersona,
+  });
+  
+  return initialMessage;
+};
+
+module.exports = { sendMessage, getMessages, deleteMessages, sendInitialMessage };

@@ -34,7 +34,7 @@ export function useProgress() {
     queryKey: ['progress'],
     queryFn: async () => {
       const response = await apiClient.get('/progress');
-      return response.data;
+      return response.data.data;
     },
     enabled: isLoaded && !!userId,
   });
@@ -46,7 +46,7 @@ export function useAnalytics(days: number = 7) {
     queryKey: ['progress', 'analytics', days],
     queryFn: async () => {
       const response = await apiClient.get(`/progress/analytics?days=${days}`);
-      return response.data;
+      return response.data.data;
     },
     enabled: isLoaded && !!userId,
   });

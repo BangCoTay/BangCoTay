@@ -5,6 +5,7 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { Sparkles, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useAppStore } from '@/store/appStore';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,12 +26,14 @@ export function Navbar() {
     ['rgba(0,0,0,0)', 'rgba(17,24,39,0.8)']
   );
 
-  const handleStart = (mode: 'login' | 'signup' = 'login') => {
+  const { setCurrentView } = useAppStore();
+
+  const handleStart = () => {
     if (isAuthenticated) {
+      setCurrentView('dashboard');
       return;
     }
-    setSearchParams({ auth_mode: mode });
-    setShowAuthModal(true);
+    setCurrentView('onboarding');
   };
 
   const scrollToSection = (id: string) => {
@@ -87,7 +90,7 @@ export function Navbar() {
             <ThemeToggle />
 
             <motion.button
-              onClick={() => handleStart('signup')}
+              onClick={() => handleStart()}
               className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -122,7 +125,7 @@ export function Navbar() {
               </button>
             ))}
             <button
-              onClick={() => handleStart('signup')}
+              onClick={() => handleStart()}
               className="w-full py-3 px-4 rounded-xl bg-primary text-primary-foreground font-medium mt-2"
             >
               {isAuthenticated ? 'Go to Dashboard' : 'Start Free'}

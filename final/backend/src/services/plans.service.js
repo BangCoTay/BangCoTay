@@ -4,6 +4,8 @@ const DayPlan = require('../models/DayPlan');
 const Task = require('../models/Task');
 const UserProgress = require('../models/UserProgress');
 const planGenerator = require('./plan-generator.service');
+const quotesService = require('./quotes.service');
+const chatService = require('./chat.service');
 
 const generatePlan = async (userId, subscriptionTier) => {
   const onboardingData = await OnboardingData.findOne({ user_id: userId });
@@ -13,7 +15,18 @@ const generatePlan = async (userId, subscriptionTier) => {
     throw error;
   }
 
-  return planGenerator.generatePlan(userId, onboardingData._id, subscriptionTier);
+  const planResult = await planGenerator.generatePlan(userId, onboardingData._id, subscriptionTier);
+  
+  // Initialize quotes and chat welcome message
+  try {
+    await quotesService.getQuotes(userId, subscriptionTier);
+    await chatService.sendInitialMessage(userId);
+  } catch (error) {
+    console.error('Error initializing quotes or chat:', error);
+    // Move on, don't fail the whole plan generation
+  }
+  
+  return planResult;
 };
 
 const getCurrentPlan = async (userId) => {

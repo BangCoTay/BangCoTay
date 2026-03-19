@@ -32,7 +32,7 @@ export function useCurrentPlan() {
     queryKey: ['plans', 'current'],
     queryFn: async () => {
       const response = await apiClient.get('/plans/current');
-      return normalizeCurrentPlanResponse(response.data);
+      return normalizeCurrentPlanResponse(response.data.data);
     },
     enabled: isLoaded && !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -45,7 +45,7 @@ export function useGeneratePlan() {
   return useMutation({
     mutationFn: async () => {
       const response = await apiClient.post('/plans/generate');
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] });
@@ -60,7 +60,7 @@ export function useDayPlan(date: string) {
     queryKey: ['plans', 'day', date],
     queryFn: async () => {
       const response = await apiClient.get(`/plans/day/${date}`);
-      return response.data;
+      return response.data.data;
     },
     enabled: isLoaded && !!userId,
   });

@@ -25,7 +25,7 @@ export function useMigrateLocalStorage() {
   return useMutation({
     mutationFn: async (data: MigrationData) => {
       const response = await apiClient.post('/migration/import-localStorage', data);
-      return response.data as MigrationResponse;
+      return response.data.data as MigrationResponse;
     },
     onSuccess: () => {
       // Clear localStorage after successful migration
