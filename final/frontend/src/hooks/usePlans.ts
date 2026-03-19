@@ -3,29 +3,53 @@ import apiClient from '@/lib/api-client';
 import { useAuth } from '@clerk/clerk-react';
 
 // Backend returns snake_case fields from Supabase; normalize to camelCase
-function normalizeCurrentPlanResponse(raw: any) {
-  if (!raw) return raw;
+interface RawPlanTask {
+  id?: string;
+  _id?: string;
+  title?: string;
+  description?: string;
+  type?: string;
+  task_type?: string;
+  completed?: boolean;
+  completedAt?: string;
+  completed_at?: string;
+}
 
-  const normalizedDayPlans =
-    raw.dayPlans?.map((dayPlan: any) => ({
+interface RawDayPlan {
+  id?: string;
+  _id?: string;
+  dayNumber?: number;
+  day_number?: number;
+  unlocked?: boolean;
+  tasks?: RawPlanTask[];
+}
+
+interface RawCurrentPlanResponse {
+  dayPlans?: RawDayPlan[];
+  [key: string]: unknown;
+}
+
+function normalizeCurrentPlanResponse(
+  raw: unknown,
+): RawCurrentPlanResponse | unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+
+  const rawObj = raw as RawCurrentPlanResponse;
+  const normalizedDayPlans: RawDayPlan[] = (rawObj.dayPlans ?? []).map(
+    (dayPlan) => ({
       ...dayPlan,
       id: dayPlan.id ?? dayPlan._id,
-      // Ensure camelCase field used throughout the UI
-      dayNumber: dayPlan.dayNumber ?? dayPlan.day_number,
-      // Normalize tasks collection
-      tasks: dayPlan.tasks?.map((task: any) => ({
+      dayNumber: dayPlan.dayNumber ?? dayPlan.day_number ?? 0,
+      tasks: (dayPlan.tasks ?? []).map((task) => ({
         ...task,
-        id: task.id ?? task._id,
-        // Map snake_case to camelCase expected by components
-        type: task.type ?? task.task_type,
+        id: task.id ?? task._id ?? '',
+        type: task.type ?? task.task_type ?? '',
         completedAt: task.completedAt ?? task.completed_at,
       })),
-    })) ?? [];
+    }),
+  );
 
-  return {
-    ...raw,
-    dayPlans: normalizedDayPlans,
-  };
+  return { ...rawObj, dayPlans: normalizedDayPlans };
 }
 
 export function useCurrentPlan() {

@@ -28,30 +28,66 @@ export interface ChatMessagesResponse {
   hasMore: boolean;
 }
 
-function normalizeChatMessage(raw: any): ChatMessage {
+interface RawChatMessage {
+  id?: string;
+  _id?: string;
+  role?: ChatMessage['role'] | string;
+  content?: string;
+  createdAt?: string;
+  created_at?: string;
+  model?: string;
+  tokensUsed?: number;
+  tokens_used?: number;
+}
+
+interface RawChatMessagesResponse {
+  messages?: RawChatMessage[];
+  total?: number;
+  hasMore?: boolean;
+}
+
+interface RawSendMessageResponse {
+  userMessage?: RawChatMessage;
+  assistantMessage?: RawChatMessage;
+  messagesRemaining?: number;
+  messages_remaining?: number;
+}
+
+function normalizeChatMessage(raw: unknown): ChatMessage {
+  const r = raw as RawChatMessage | undefined;
+  const role =
+    r?.role === 'user' || r?.role === 'assistant' ? r.role : ('user' as const);
+
   return {
-    id: raw.id ?? raw._id,
-    role: raw.role,
-    content: raw.content,
-    createdAt: raw.createdAt ?? raw.created_at,
-    model: raw.model,
-    tokensUsed: raw.tokensUsed ?? raw.tokens_used,
+    id: r?.id ?? r?._id ?? '',
+    role,
+    content: r?.content ?? '',
+    createdAt: r?.createdAt ?? r?.created_at ?? new Date().toISOString(),
+    model: r?.model,
+    tokensUsed: r?.tokensUsed ?? r?.tokens_used,
   };
 }
 
-function normalizeChatMessagesResponse(raw: any): ChatMessagesResponse {
+function normalizeChatMessagesResponse(raw: unknown): ChatMessagesResponse {
+  const r = raw as RawChatMessagesResponse | RawChatMessage[] | undefined;
+  const messagesRaw = Array.isArray(r) ? r : r?.messages ?? [];
+
   return {
-    messages: (raw?.messages ?? raw ?? []).map(normalizeChatMessage),
-    total: raw?.total ?? 0,
-    hasMore: raw?.hasMore ?? false,
+    messages: messagesRaw.map(normalizeChatMessage),
+    total: !Array.isArray(r) && typeof r?.total === 'number' ? r.total : 0,
+    hasMore:
+      !Array.isArray(r) && typeof r?.hasMore === 'boolean' ? r.hasMore : false,
   };
 }
 
-function normalizeSendMessageResponse(raw: any): SendMessageResponse {
-  let messagesRemaining =
-    typeof raw?.messagesRemaining === 'number'
-      ? raw.messagesRemaining
-      : null;
+function normalizeSendMessageResponse(raw: unknown): SendMessageResponse {
+  const r = raw as RawSendMessageResponse | undefined;
+  let messagesRemaining: number | null =
+    typeof r?.messagesRemaining === 'number'
+      ? r.messagesRemaining
+      : typeof r?.messages_remaining === 'number'
+        ? r.messages_remaining
+        : null;
 
   // Backend uses -1 to represent "unlimited"
   if (messagesRemaining === -1) {
@@ -59,8 +95,8 @@ function normalizeSendMessageResponse(raw: any): SendMessageResponse {
   }
 
   return {
-    userMessage: normalizeChatMessage(raw.userMessage),
-    assistantMessage: normalizeChatMessage(raw.assistantMessage),
+    userMessage: normalizeChatMessage(r?.userMessage),
+    assistantMessage: normalizeChatMessage(r?.assistantMessage),
     messagesRemaining,
   };
 }

@@ -31,23 +31,78 @@ export interface UserSubscriptionInfo {
   };
 }
 
-function normalizeUserProfile(raw: any): UserProfile {
+type SubscriptionTier = UserSubscriptionInfo['tier'];
+
+interface RawUserProfile {
+  id?: string;
+  _id?: string;
+  email?: string;
+  full_name?: string;
+  fullName?: string;
+  avatar_url?: string;
+  avatarUrl?: string;
+  subscription_tier?: SubscriptionTier | string;
+  subscriptionTier?: SubscriptionTier | string;
+  onboarding_completed?: boolean;
+  onboardingCompleted?: boolean;
+  created_at?: string;
+  createdAt?: string;
+}
+
+function normalizeUserProfile(raw: unknown): UserProfile {
+  const r = raw as RawUserProfile | undefined;
   return {
-    id: raw.id ?? raw._id,
-    email: raw.email,
-    fullName: raw.full_name ?? raw.fullName,
-    avatarUrl: raw.avatar_url ?? raw.avatarUrl,
-    subscriptionTier: raw.subscription_tier ?? raw.subscriptionTier ?? 'free',
+    id: r?.id ?? r?._id ?? '',
+    email: r?.email ?? '',
+    fullName: r?.full_name ?? r?.fullName ?? '',
+    avatarUrl: r?.avatar_url ?? r?.avatarUrl,
+    subscriptionTier:
+      (r?.subscription_tier ??
+        r?.subscriptionTier ??
+        'free') === 'starter' ||
+      (r?.subscription_tier ?? r?.subscriptionTier) === 'premium'
+        ? (r?.subscription_tier ??
+            r?.subscriptionTier ??
+            'free') as SubscriptionTier
+        : 'free',
     onboardingCompleted:
-      raw.onboarding_completed ?? raw.onboardingCompleted ?? false,
-    createdAt: raw.created_at ?? raw.createdAt,
+      r?.onboarding_completed ?? r?.onboardingCompleted ?? false,
+    createdAt: r?.created_at ?? r?.createdAt ?? new Date().toISOString(),
   };
 }
 
-function normalizeUserSubscription(raw: any): UserSubscriptionInfo {
-  const aiMessagesPerDayRaw = raw?.limits?.aiMessagesPerDay;
-  const quoteRegenerationsPerDayRaw = raw?.limits?.quoteRegenerationsPerDay;
-  const aiMessagesTotalRaw = raw?.limits?.aiMessagesTotal;
+interface RawUserSubscriptionLimits {
+  daysUnlocked?: number;
+  days_unlocked?: number;
+  aiMessagesTotal?: number;
+  ai_messages_total?: number;
+  aiMessagesPerDay?: number;
+  ai_messages_per_day?: number;
+  quoteRegenerationsPerDay?: number;
+  quote_regenerations_per_day?: number;
+  hasAICompanion?: boolean;
+  has_ai_companion?: boolean;
+}
+
+interface RawUserSubscription {
+  tier?: SubscriptionTier | string;
+  status?: string;
+  currentPeriodEnd?: string;
+  current_period_end?: string;
+  cancelAtPeriodEnd?: boolean;
+  cancel_at_period_end?: boolean;
+  limits?: RawUserSubscriptionLimits;
+}
+
+function normalizeUserSubscription(raw: unknown): UserSubscriptionInfo {
+  const r = raw as RawUserSubscription | undefined;
+  const aiMessagesPerDayRaw =
+    r?.limits?.aiMessagesPerDay ?? r?.limits?.ai_messages_per_day;
+  const quoteRegenerationsPerDayRaw =
+    r?.limits?.quoteRegenerationsPerDay ??
+    r?.limits?.quote_regenerations_per_day;
+  const aiMessagesTotalRaw =
+    r?.limits?.aiMessagesTotal ?? r?.limits?.ai_messages_total;
 
   const aiMessagesPerDay =
     typeof aiMessagesPerDayRaw === 'number' && aiMessagesPerDayRaw === -1
@@ -66,16 +121,22 @@ function normalizeUserSubscription(raw: any): UserSubscriptionInfo {
       : quoteRegenerationsPerDayRaw ?? null;
 
   return {
-    tier: raw.tier ?? 'free',
-    status: raw.status,
-    currentPeriodEnd: raw.currentPeriodEnd ?? raw.current_period_end,
-    cancelAtPeriodEnd: raw.cancelAtPeriodEnd ?? raw.cancel_at_period_end,
+    tier:
+      (r?.tier ?? 'free') === 'starter' || (r?.tier ?? 'free') === 'premium'
+        ? (r?.tier ?? 'free') as SubscriptionTier
+        : 'free',
+    status: r?.status ?? '',
+    currentPeriodEnd: r?.currentPeriodEnd ?? r?.current_period_end,
+    cancelAtPeriodEnd:
+      r?.cancelAtPeriodEnd ?? r?.cancel_at_period_end ?? false,
     features: {
-      daysUnlocked: raw.limits?.daysUnlocked ?? raw.limits?.days_unlocked ?? 0,
+      daysUnlocked:
+        r?.limits?.daysUnlocked ?? r?.limits?.days_unlocked ?? 0,
       aiMessagesTotal,
       aiMessagesPerDay,
       quoteRegenerationsPerDay,
-      hasAICompanion: raw.limits?.hasAICompanion ?? raw.limits?.has_ai_companion ?? false,
+      hasAICompanion:
+        r?.limits?.hasAICompanion ?? r?.limits?.has_ai_companion ?? false,
     },
   };
 }

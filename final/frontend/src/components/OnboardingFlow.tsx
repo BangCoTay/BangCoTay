@@ -147,7 +147,6 @@ export function OnboardingFlow() {
         addiction: tempOnboardingData.addiction!,
         severity: tempOnboardingData.severity!,
         painPoints: tempOnboardingData.painPoints,
-        healthyHabit: "none", // Default value
       });
 
       // Generate plan (automatically triggered by backend after onboarding)

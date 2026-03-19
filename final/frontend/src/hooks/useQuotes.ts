@@ -3,7 +3,8 @@ import apiClient from '@/lib/api-client';
 import { useAuth } from '@clerk/clerk-react';
 
 interface RawQuote {
-  id: string;
+  id?: string;
+  _id?: string;
   text?: string;
   content?: string;
   category: 'emotional' | 'practical';
@@ -31,7 +32,7 @@ function normalizeQuotesResponse(raw: { quotes?: RawQuote[]; regenerationsRemain
   const rawQuotes = Array.isArray(raw) ? raw : raw.quotes ?? [];
 
   const quotes: Quote[] = rawQuotes.map((q: RawQuote) => ({
-    id: q.id ?? (q as any)._id,
+    id: q.id ?? q._id ?? '',
     content: q.text ?? q.content ?? '',
     category: q.category,
     isActive: q.isActive ?? q.is_active ?? true,

@@ -22,15 +22,30 @@ export interface CompleteTaskResponse {
   celebrationMessage?: string;
 }
 
-function normalizeTask(raw: any): Task {
+interface RawTask {
+  id?: string;
+  _id?: string;
+  dayNumber?: number;
+  day_number?: number;
+  title?: string;
+  description?: string;
+  type?: string;
+  task_type?: string;
+  completed?: boolean;
+  completedAt?: string;
+  completed_at?: string;
+}
+
+function normalizeTask(raw: unknown): Task {
+  const r = raw as RawTask | undefined;
   return {
-    id: raw.id ?? raw._id,
-    dayNumber: raw.dayNumber ?? raw.day_number,
-    title: raw.title,
-    description: raw.description,
-    type: raw.type ?? raw.task_type,
-    completed: raw.completed,
-    completedAt: raw.completedAt ?? raw.completed_at,
+    id: r?.id ?? r?._id ?? '',
+    dayNumber: r?.dayNumber ?? r?.day_number ?? 0,
+    title: r?.title ?? '',
+    description: r?.description ?? '',
+    type: r?.type ?? r?.task_type ?? '',
+    completed: !!r?.completed,
+    completedAt: r?.completedAt ?? r?.completed_at,
   };
 }
 
@@ -46,7 +61,8 @@ export function useTasks(dayNumber?: number, completed?: boolean) {
         params.append("completed", completed.toString());
 
       const response = await apiClient.get(`/tasks?${params.toString()}`);
-      const rawTasks = response.data.data as any[];
+      const rawData = response.data.data;
+      const rawTasks = Array.isArray(rawData) ? rawData : [];
       return rawTasks.map(normalizeTask);
     },
     enabled: isLoaded && !!userId,
