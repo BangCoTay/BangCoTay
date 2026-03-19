@@ -1,0 +1,139 @@
+import { motion } from 'framer-motion';
+import { useQuotes, useRegenerateQuotes } from '@/hooks/useQuotes';
+import { RefreshCw, Lock, Sparkles, Quote, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+
+export function QuotesPanel() {
+  const { data: quotesData, isLoading } = useQuotes();
+  const regenerateMutation = useRegenerateQuotes();
+  const { toast } = useToast();
+
+  const quotes = quotesData?.quotes || [];
+  const regenerationsRemaining = quotesData?.regenerationsRemaining;
+  const canRegenerate = regenerationsRemaining === null || regenerationsRemaining > 0;
+
+  const handleRegenerate = async () => {
+    if (!canRegenerate) return;
+
+    try {
+      await regenerateMutation.mutateAsync();
+      toast({
+        title: '✨ New quotes generated!',
+        description: 'Your daily motivation has been refreshed.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to regenerate quotes. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full bg-card rounded-2xl border overflow-hidden">
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-card rounded-2xl border overflow-hidden">
+      {/* Header */}
+      <div className="p-4 border-b bg-secondary/30">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-warning flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-accent-foreground" />
+          </div>
+          <div>
+            <h3 className="font-semibold">Daily Motivation</h3>
+            <p className="text-xs text-muted-foreground">Quotes to keep you going</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Quotes */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {quotes.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground text-sm">No quotes available</p>
+          </div>
+        ) : (
+          quotes.map((quote, index) => (
+            <motion.div
+              key={quote.id}
+              className="quote-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <div className="flex gap-3">
+                <Quote className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium leading-relaxed italic">
+                    "{quote.content}"
+                  </p>
+                  <span className={cn(
+                    "inline-block mt-2 text-xs px-2 py-0.5 rounded-full",
+                    quote.category === 'emotional'
+                      ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400"
+                      : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  )}>
+                    {quote.category === 'emotional' ? '💫 Emotional' : '🎯 Practical'}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))
+        )}
+      </div>
+
+      {/* Regenerate button */}
+      <div className="p-4 border-t">
+        {regenerationsRemaining !== null && (
+          <div className="mb-2 text-center">
+            <span className="text-xs text-muted-foreground">
+              {regenerationsRemaining > 0 ? (
+                `${regenerationsRemaining} regeneration${regenerationsRemaining > 1 ? 's' : ''} left today`
+              ) : (
+                <span className="text-accent">Upgrade for unlimited quotes</span>
+              )}
+            </span>
+          </div>
+        )}
+
+        <button
+          onClick={handleRegenerate}
+          disabled={!canRegenerate || regenerateMutation.isPending}
+          className={cn(
+            "w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all",
+            canRegenerate && !regenerateMutation.isPending
+              ? "bg-secondary hover:bg-secondary/80 text-foreground"
+              : "bg-muted text-muted-foreground cursor-not-allowed"
+          )}
+        >
+          {regenerateMutation.isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Generating...
+            </>
+          ) : canRegenerate ? (
+            <>
+              <RefreshCw className="w-4 h-4" />
+              New Quotes
+            </>
+          ) : (
+            <>
+              <Lock className="w-4 h-4" />
+              Upgrade to Regenerate
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}

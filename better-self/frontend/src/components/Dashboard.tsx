@@ -1,0 +1,105 @@
+import { motion } from 'framer-motion';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { AICoachPanel } from '@/components/AICoachPanel';
+import { PlanPanel } from '@/components/PlanPanel';
+import { QuotesPanel } from '@/components/QuotesPanel';
+import { useLogout } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUsers';
+import { Sparkles, LogOut, Crown, Loader2 } from 'lucide-react';
+
+export function Dashboard() {
+  const logout = useLogout();
+  const { data: userProfile, isLoading } = useUserProfile();
+
+  const handleLogout = () => {
+    logout.mutate();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-bold text-gradient-primary">Resetify</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Subscription badge */}
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary">
+                {userProfile?.subscriptionTier === 'premium' && (
+                  <Crown className="w-4 h-4 text-accent" />
+                )}
+                <span className="text-sm font-medium capitalize">
+                  {userProfile?.subscriptionTier || 'free'}
+                </span>
+              </div>
+
+              <ThemeToggle />
+
+              <button
+                onClick={handleLogout}
+                disabled={logout.isPending}
+                className="p-2 rounded-xl hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
+                title="Logout"
+              >
+                {logout.isPending ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <LogOut className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content - 3 column layout */}
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 py-6">
+        <div className="grid lg:grid-cols-12 gap-6 h-[calc(100vh-120px)]">
+          {/* Left panel - AI Coach */}
+          <motion.div
+            className="lg:col-span-3 h-full"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <AICoachPanel />
+          </motion.div>
+
+          {/* Center panel - Plan */}
+          <motion.div
+            className="lg:col-span-6 h-full overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <PlanPanel />
+          </motion.div>
+
+          {/* Right panel - Quotes */}
+          <motion.div
+            className="lg:col-span-3 h-full"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <QuotesPanel />
+          </motion.div>
+        </div>
+      </main>
+    </div>
+  );
+}
