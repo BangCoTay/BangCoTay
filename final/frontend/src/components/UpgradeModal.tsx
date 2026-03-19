@@ -11,8 +11,28 @@ interface UpgradeModalProps {
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const createCheckout = useCreateCheckout();
 
+  const starterPriceId = import.meta.env.VITE_STRIPE_PRICE_ID_STARTER as
+    | string
+    | undefined;
+  const premiumPriceId = import.meta.env.VITE_STRIPE_PRICE_ID_PREMIUM as
+    | string
+    | undefined;
+
+  const getPriceId = (tier: "starter" | "premium") =>
+    tier === "starter" ? starterPriceId : premiumPriceId;
+
   const handleUpgrade = (tier: 'starter' | 'premium') => {
-    createCheckout.mutate({ tier });
+    const priceId = getPriceId(tier);
+    if (!priceId) {
+      console.error(
+        `Missing Stripe priceId for tier "${tier}". Set VITE_STRIPE_PRICE_ID_${
+          tier === "starter" ? "STARTER" : "PREMIUM"
+        } in the frontend env.`
+      );
+      return;
+    }
+
+    createCheckout.mutate({ tier, priceId });
   };
 
   const plans = [
@@ -140,7 +160,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                     {/* CTA */}
                     <button
                       onClick={() => handleUpgrade(plan.tier)}
-                      disabled={createCheckout.isPending}
+                      disabled={createCheckout.isPending || !getPriceId(plan.tier)}
                       className={cn(
                         "w-full py-3 rounded-xl font-medium transition-all",
                         plan.name === 'Premium'

@@ -33,7 +33,7 @@ export function AICoachPanel() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const coach = onboardingData?.niche ? COACHES[onboardingData.niche] : COACHES.health;
-  const isPremium = subscription?.subscriptionTier === 'premium';
+  const isPremium = subscription?.tier === 'premium';
   const hasAICompanion = subscription?.features?.hasAICompanion;
 
   const chatMessages = useMemo(
@@ -43,9 +43,11 @@ export function AICoachPanel() {
 
   const filteredMessages = useMemo(() => {
     if (selectedPersona === 'coach') {
-      return chatMessages.filter(m => m.role === 'user' || m.role === 'assistant');
+      return chatMessages;
     }
-    return chatMessages.filter(m => m.role === selectedPersona);
+    // The chat feed uses `role: 'user' | 'assistant'`. Celebration/persona messages
+    // are modeled as assistant messages in the current API typing.
+    return chatMessages.filter((m) => m.role === 'assistant');
   }, [chatMessages, selectedPersona]);
 
   useEffect(() => {
@@ -80,10 +82,7 @@ export function AICoachPanel() {
     setInputValue('');
 
     try {
-      const result = await sendMessage.mutateAsync({
-        content: userMessage,
-        coachPersona: coach.name,
-      });
+      const result = await sendMessage.mutateAsync(userMessage);
 
       if (typeof result.messagesRemaining === 'number') {
         setMessagesRemaining(

@@ -18,8 +18,29 @@ import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
 import { useToast } from "@/hooks/use-toast";
 
+type PlanTask = {
+  id: string;
+  title: string;
+  completed: boolean;
+};
+
+type DayPlan = {
+  dayNumber: number;
+  unlocked?: boolean;
+  tasks?: PlanTask[];
+};
+
+type CurrentPlan = {
+  dayPlans?: DayPlan[];
+};
+
 export function PlanPanel() {
-  const { data: planData, isLoading: planLoading } = useCurrentPlan();
+  const currentPlanQuery = useCurrentPlan() as unknown as {
+    data?: CurrentPlan;
+    isLoading: boolean;
+  };
+  const planData = currentPlanQuery.data;
+  const planLoading = currentPlanQuery.isLoading;
   const { data: progress } = useProgress();
   const { data: onboardingData } = useOnboarding();
   const { data: subscription } = useUserSubscription();
