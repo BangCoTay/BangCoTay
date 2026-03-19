@@ -1,6 +1,7 @@
 import { SignIn, SignUp } from '@clerk/clerk-react';
 import { X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -8,7 +9,14 @@ interface AuthModalProps {
 
 export function AuthModal({ onClose }: AuthModalProps) {
   const [searchParams] = useSearchParams();
-  const initialMode = searchParams.get('auth_mode') === 'signup' ? 'signup' : 'login';
+  const [authMode, setAuthMode] = useState(() => 
+    searchParams.get('auth_mode') === 'signup' ? 'signup' : 'login'
+  );
+
+  useEffect(() => {
+    const mode = searchParams.get('auth_mode') === 'signup' ? 'signup' : 'login';
+    setAuthMode(mode);
+  }, [searchParams]);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-300">
@@ -21,8 +29,8 @@ export function AuthModal({ onClose }: AuthModalProps) {
           <X className="h-4 w-4" />
         </button>
         
-        <div className="w-full">
-          {initialMode === 'login' ? (
+        <div className="w-full" key={authMode}>
+          {authMode === 'login' ? (
             <SignIn 
               routing="hash"
               signUpUrl="/?auth_mode=signup"

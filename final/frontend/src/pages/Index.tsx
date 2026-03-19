@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -16,6 +16,9 @@ const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { data: onboardingData, isLoading: isLoadingOnboarding } = useOnboarding();
+  // Track if we've just navigated to dashboard to avoid re-routing back to onboarding
+  // during the brief window when the query is invalidating/refetching
+  const justNavigatedToDashboard = useRef(false);
 
   useEffect(() => {
     // Apply dark mode on initial load
@@ -46,16 +49,35 @@ const Index = () => {
     // Handle view routing based on authentication and onboarding status
     if (!isLoadingAuth) {
       if (!isAuthenticated) {
+        // Reset the flag when user signs out
+        justNavigatedToDashboard.current = false;
         if (currentView !== 'onboarding' && currentView !== 'landing') {
           setCurrentView('landing');
         }
-      } else if (isAuthenticated && !isLoadingOnboarding && !onboardingData) {
-        setCurrentView('onboarding');
-      } else if (isAuthenticated && !isLoadingOnboarding && onboardingData) {
-        setCurrentView('dashboard');
+      } else if (isAuthenticated && !isLoadingOnboarding) {
+        if (!onboardingData) {
+          // Only route to onboarding if we haven't just completed it.
+          // This guards against the race condition where the query is invalidated
+          // but hasn't refetched yet (brief moment where onboardingData is undefined).
+          if (!justNavigatedToDashboard.current) {
+            setCurrentView('onboarding');
+          }
+        } else {
+          // Onboarding data exists → go to dashboard
+          justNavigatedToDashboard.current = false;
+          setCurrentView('dashboard');
+        }
       }
     }
   }, [isAuthenticated, isLoadingAuth, isLoadingOnboarding, onboardingData, setCurrentView, currentView]);
+
+  // Listen for the OnboardingFlow completing — it calls setCurrentView('dashboard') directly.
+  // We set the flag here so the routing effect above doesn't immediately redirect back.
+  useEffect(() => {
+    if (currentView === 'dashboard') {
+      justNavigatedToDashboard.current = true;
+    }
+  }, [currentView]);
 
   if (isLoadingAuth) {
     return (
