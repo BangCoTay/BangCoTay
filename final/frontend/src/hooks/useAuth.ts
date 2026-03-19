@@ -1,63 +1,45 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { authService, type SignupData, type LoginData } from '@/lib/auth';
-import { useNavigate } from 'react-router-dom';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/appStore';
 
+/**
+ * Legacy hook bridge to Clerk-based AuthContext
+ * This allows existing components to continue working with minimal changes.
+ */
 export function useAuth() {
-  return useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: authService.getMe,
-    enabled: authService.isAuthenticated(),
-    retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-
-export function useSignup() {
-  const navigate = useNavigate();
-  const { setCurrentView } = useAppStore();
-
-  return useMutation({
-    mutationFn: (data: SignupData) => authService.signup(data),
-    onSuccess: (data) => {
-      authService.setTokens(data.accessToken, data.refreshToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setCurrentView('onboarding');
-    },
-  });
-}
-
-export function useLogin() {
-  const navigate = useNavigate();
-  const { setCurrentView } = useAppStore();
-
-  return useMutation({
-    mutationFn: (data: LoginData) => authService.login(data),
-    onSuccess: (data) => {
-      authService.setTokens(data.accessToken, data.refreshToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      // Check if user has completed onboarding
-      if (data.profile?.onboarding_completed) {
-        setCurrentView('dashboard');
-      } else {
-        setCurrentView('onboarding');
-      }
-    },
-  });
+  const { user, isLoading, isAuthenticated } = useAuthContext();
+  
+  return { 
+    data: user, 
+    isLoading,
+    isAuthenticated,
+    // Add other fields if needed for compatibility
+  };
 }
 
 export function useLogout() {
+  const { signOut } = useAuthContext();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const { setCurrentView, resetApp } = useAppStore();
+  const { resetApp, setCurrentView } = useAppStore();
 
   return useMutation({
-    mutationFn: authService.logout,
+    mutationFn: async () => {
+      await signOut();
+    },
     onSuccess: () => {
       queryClient.clear();
       resetApp();
       setCurrentView('landing');
     },
   });
+}
+
+// useLogin and useSignup are no longer needed as Clerk handles these
+// through its own UI components. These are kept as placeholders to avoid breaking imports.
+export function useLogin() {
+  return { mutateAsync: () => Promise.reject('Use Clerk SignIn component instead') };
+}
+
+export function useSignup() {
+  return { mutateAsync: () => Promise.reject('Use Clerk SignUp component instead') };
 }

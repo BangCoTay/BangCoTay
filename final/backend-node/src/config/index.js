@@ -1,4 +1,13 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
+// Explicitly ensure Clerk keys are in process.env for the SDK
+if (process.env.CLERK_PUBLISHABLE_KEY) {
+  process.env.CLERK_PUBLISHABLE_KEY = process.env.CLERK_PUBLISHABLE_KEY.trim();
+}
+if (process.env.CLERK_SECRET_KEY) {
+  process.env.CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY.trim();
+}
 
 const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -15,6 +24,10 @@ const config = {
   },
   openaiApiKey: process.env.OPENAI_API_KEY,
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:8080',
+  clerk: {
+    publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+    secretKey: process.env.CLERK_SECRET_KEY,
+  },
 };
 
 module.exports = config;

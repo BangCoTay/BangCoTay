@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
+import { useAuth } from '@clerk/clerk-react';
 
 export interface ChatMessage {
   id: string;
@@ -65,6 +66,7 @@ function normalizeSendMessageResponse(raw: any): SendMessageResponse {
 }
 
 export function useChatMessages(limit = 50, offset = 0) {
+  const { userId, isLoaded } = useAuth();
   return useQuery({
     queryKey: ['chat', 'messages', { limit, offset }],
     queryFn: async () => {
@@ -73,6 +75,7 @@ export function useChatMessages(limit = 50, offset = 0) {
       );
       return normalizeChatMessagesResponse(response.data);
     },
+    enabled: isLoaded && !!userId,
     staleTime: 30 * 1000, // 30 seconds
   });
 }
@@ -81,8 +84,8 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: SendMessageRequest) => {
-      const response = await apiClient.post('/chat/messages', data);
+    mutationFn: async (content: string) => {
+      const response = await apiClient.post('/chat/messages', { content });
       return normalizeSendMessageResponse(response.data);
     },
     onSuccess: () => {

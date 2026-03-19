@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/appStore';
 import { useSubmitOnboarding } from '@/hooks/useOnboarding';
 import { useGeneratePlan } from '@/hooks/usePlans';
+import { Button } from '@/components/ui/button';
 import { NICHES, ADDICTIONS, PAIN_POINTS } from '@/types';
 import { 
   ArrowLeft, 
@@ -87,6 +88,7 @@ export function OnboardingFlow() {
   const [currentStep, setCurrentStep] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingChecks, setLoadingChecks] = useState<number[]>([]);
+  const [isError, setIsError] = useState(false);
   const hasSubmittedRef = useRef(false);
 
   const {
@@ -161,8 +163,8 @@ export function OnboardingFlow() {
           }, 3000);
         } catch (error) {
           console.error('Error submitting onboarding:', error);
-          // Allow retry if needed by resetting ref (though here we don't have a retry button)
-          hasSubmittedRef.current = false;
+          setIsError(true);
+          // Do NOT reset hasSubmittedRef.current = false here to avoid immediate loop
         }
       };
 
@@ -186,8 +188,16 @@ export function OnboardingFlow() {
     }
   };
 
+  const handleRetry = () => {
+    setIsError(false);
+    hasSubmittedRef.current = false;
+    setCurrentStep(STEPS.indexOf('loading'));
+  };
+
   const handleNext = () => {
     if (stepType === 'commitment') {
+      setIsError(false);
+      hasSubmittedRef.current = false;
       setCurrentStep(STEPS.indexOf('loading'));
     } else {
       setCurrentStep(prev => prev + 1);
@@ -805,40 +815,55 @@ export function OnboardingFlow() {
               <p className="text-sm text-muted-foreground">{loadingProgress}% complete</p>
             </div>
 
-            <div className="max-w-sm mx-auto space-y-3">
-              {[
-                'Analyzing your habit patterns',
-                'Adjusting difficulty level',
-                'Designing daily micro-actions',
-                'Activating your AI coach',
-              ].map((text, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0.3 }}
-                  animate={{ opacity: loadingChecks.includes(i) ? 1 : 0.3 }}
-                  className="flex items-center gap-3 text-left"
-                >
-                  <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300",
-                    loadingChecks.includes(i) 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted"
-                  )}>
-                    {loadingChecks.includes(i) ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-                    )}
-                  </div>
-                  <span className={cn(
-                    "transition-colors",
-                    loadingChecks.includes(i) ? "text-foreground" : "text-muted-foreground"
-                  )}>
-                    {text}
-                  </span>
-                </motion.div>
-              ))}
-            </div>
+            {isError ? (
+              <div className="max-w-sm mx-auto p-6 rounded-2xl bg-destructive/10 border border-destructive/20 text-center space-y-4">
+                <div className="flex justify-center">
+                  <AlertCircle className="w-10 h-10 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-destructive">Something went wrong</h3>
+                  <p className="text-sm text-muted-foreground">We couldn't create your plan. This might be due to too many requests.</p>
+                </div>
+                <Button onClick={handleRetry} variant="destructive" className="w-full">
+                  Try Again
+                </Button>
+              </div>
+            ) : (
+              <div className="max-w-sm mx-auto space-y-3">
+                {[
+                  'Analyzing your habit patterns',
+                  'Adjusting difficulty level',
+                  'Designing daily micro-actions',
+                  'Activating your AI coach',
+                ].map((text, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0.3 }}
+                    animate={{ opacity: loadingChecks.includes(i) ? 1 : 0.3 }}
+                    className="flex items-center gap-3 text-left"
+                  >
+                    <div className={cn(
+                      "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300",
+                      loadingChecks.includes(i) 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-muted"
+                    )}>
+                      {loadingChecks.includes(i) ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                      )}
+                    </div>
+                    <span className={cn(
+                      "transition-colors",
+                      loadingChecks.includes(i) ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                      {text}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </motion.div>
         );
 

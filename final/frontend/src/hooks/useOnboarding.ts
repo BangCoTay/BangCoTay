@@ -1,16 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
 import type { OnboardingData } from '@/types';
-import { authService } from '@/lib/auth';
+import { useAuth } from '@clerk/clerk-react';
 
 export function useOnboarding() {
+  const { userId, isLoaded } = useAuth();
   return useQuery({
     queryKey: ['onboarding'],
     queryFn: async () => {
       const response = await apiClient.get('/onboarding');
       return response.data;
     },
-    enabled: authService.isAuthenticated(),
+    enabled: isLoaded && !!userId,
     retry: false,
   });
 }

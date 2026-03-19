@@ -10,12 +10,26 @@ const apiClient = axios.create({
   timeout: 30000, // 30 seconds
 });
 
+let tokenGetter: (() => Promise<string | null>) | null = null;
+
+export const setTokenGetter = (getter: () => Promise<string | null>) => {
+  tokenGetter = getter;
+};
+
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    if (tokenGetter) {
+      const token = await tokenGetter();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } else {
+      // Fallback to localStorage for initial migration period or if needed
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -24,48 +38,17 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for token refresh
+// Response interceptor for basic error handling
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-
-    // If error is 401 and we haven't tried to refresh yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem('refresh_token');
-
-        if (!refreshToken) {
-          // No refresh token, redirect to login if not already there
-          localStorage.clear();
-          if (window.location.pathname !== '/') {
-            window.location.href = '/';
-          }
-          return Promise.reject(error);
-        }
-
-        // Try to refresh the token
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refreshToken,
-        });
-
-        // Save new tokens
-        localStorage.setItem('access_token', data.accessToken);
-        localStorage.setItem('refresh_token', data.refreshToken);
-
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed, clear storage and redirect to login
-        localStorage.clear();
-        window.location.href = '/';
-        return Promise.reject(refreshError);
+    // If error is 401 and we are not on landing, maybe the session expired
+    if (error.response?.status === 401) {
+      if (window.location.pathname !== '/') {
+        // window.location.href = '/'; 
+        // We'll let Clerk hooks handle redirection if needed
       }
     }
-
     return Promise.reject(error);
   }
 );

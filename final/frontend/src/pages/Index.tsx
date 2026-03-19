@@ -6,10 +6,15 @@ import { LandingPage } from '@/components/LandingPage';
 import { OnboardingFlow } from '@/components/OnboardingFlow';
 import { Dashboard } from '@/components/Dashboard';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
+import { AuthModal } from '@/components/AuthModal';
+import { useState } from 'react';
 
 const Index = () => {
   const { currentView, isDarkMode, setCurrentView } = useAppStore();
   const { isAuthenticated, isLoading: isLoadingAuth } = useAuthContext();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { data: onboardingData, isLoading: isLoadingOnboarding } = useOnboarding();
 
   useEffect(() => {
@@ -20,6 +25,22 @@ const Index = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+
+  useEffect(() => {
+    // Handle opening auth modal from URL params
+    const authMode = searchParams.get('auth_mode');
+    if (authMode && !isAuthenticated) {
+      setIsAuthModalOpen(true);
+    }
+  }, [searchParams, isAuthenticated]);
+
+  const handleCloseAuthModal = () => {
+    setIsAuthModalOpen(false);
+    // Remove auth_mode from URL without refreshing
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('auth_mode');
+    setSearchParams(newParams);
+  };
 
   useEffect(() => {
     // Handle view routing based on authentication and onboarding status
@@ -55,6 +76,7 @@ const Index = () => {
         {currentView === 'onboarding' && <OnboardingFlow />}
         {currentView === 'dashboard' && <Dashboard />}
       </motion.div>
+      {isAuthModalOpen && <AuthModal onClose={handleCloseAuthModal} />}
     </AnimatePresence>
   );
 };

@@ -4,9 +4,16 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const config = require('./config');
 const connectDB = require('./database/connection');
+const { clerkMiddleware } = require('@clerk/express');
 const routes = require('./routes');
 
 const app = express();
+
+// Clerk Middleware
+app.use(clerkMiddleware({
+  publishableKey: config.clerk.publishableKey,
+  secretKey: config.clerk.secretKey,
+}));
 
 // Security headers
 app.use(helmet());
@@ -22,12 +29,22 @@ app.use(
 // Rate limiting (100 requests per 60 seconds)
 const limiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 100,
+  max: 300, // Increased for dev stability
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many requests, please try again later.' },
 });
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20, // Stricter for auth routes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many login attempts, please try again later.' },
+});
+
 app.use(limiter);
+app.use('/api/v1/auth', authLimiter);
 
 // Body parsing - JSON for all routes except Stripe webhook
 // The webhook route handles its own raw body parsing via express.raw()
@@ -50,6 +67,7 @@ app.use((err, req, res, next) => {
   const message = err.message || 'Internal Server Error';
 
   console.error(`[ERROR] ${statusCode} - ${message}`);
+  if (err.stack) console.error(err.stack);
 
   res.status(statusCode).json({
     success: false,
@@ -69,6 +87,7 @@ const startServer = async () => {
   app.listen(config.port, () => {
     console.log(`Application is running on: http://localhost:${config.port}/${config.apiPrefix}`);
     console.log(`Environment: ${config.nodeEnv}`);
+    console.log(`Clerk Publishable Key: ${config.clerk.publishableKey ? 'Found' : 'MISSING'}`);
   });
 };
 

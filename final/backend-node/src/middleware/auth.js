@@ -1,20 +1,37 @@
-const jwt = require('jsonwebtoken');
-const config = require('../config');
+const { clerkClient, getAuth } = require('@clerk/express');
 const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ success: false, error: 'No token provided' });
+    const { userId } = getAuth(req);
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthenticated' });
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const decoded = jwt.verify(token, config.jwtSecret);
-
-    const user = await User.findById(decoded.id).select('_id email subscription_tier onboarding_completed');
+    // Find user in our database by clerk_id
+    let user = await User.findOne({ clerk_id: userId });
+    
+    // Fallback: If not found by clerk_id, try to find by email and link them
     if (!user) {
-      return res.status(401).json({ success: false, error: 'User not found' });
+      try {
+        const clerkUser = await clerkClient.users.getUser(userId);
+        const email = clerkUser.emailAddresses[0]?.emailAddress;
+        
+        if (email) {
+          user = await User.findOne({ email });
+          if (user) {
+            user.clerk_id = userId;
+            await user.save();
+          }
+        }
+      } catch (clerkError) {
+        console.error('Error fetching user from Clerk:', clerkError);
+      }
+    }
+
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'User profile not found. Please complete signup.' });
     }
 
     req.user = {
@@ -22,12 +39,13 @@ const auth = async (req, res, next) => {
       email: user.email,
       subscriptionTier: user.subscription_tier,
       onboardingCompleted: user.onboarding_completed,
+      clerkId: userId
     };
-    req.token = token;
 
     next();
   } catch (error) {
-    return res.status(401).json({ success: false, error: 'Invalid token' });
+    console.error('Auth Middleware Error:', error);
+    return res.status(401).json({ success: false, error: 'Invalid authentication' });
   }
 };
 

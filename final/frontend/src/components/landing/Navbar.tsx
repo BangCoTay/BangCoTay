@@ -4,10 +4,12 @@ import { AuthModal } from '@/components/AuthModal';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Sparkles, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated } = useAuthContext();
   const { scrollY } = useScroll();
 
@@ -23,11 +25,11 @@ export function Navbar() {
     ['rgba(0,0,0,0)', 'rgba(17,24,39,0.8)']
   );
 
-  const handleStart = () => {
+  const handleStart = (mode: 'login' | 'signup' = 'login') => {
     if (isAuthenticated) {
-      // Already authenticated, will be redirected by Index component
       return;
     }
+    setSearchParams({ auth_mode: mode });
     setShowAuthModal(true);
   };
 
@@ -85,7 +87,7 @@ export function Navbar() {
             <ThemeToggle />
 
             <motion.button
-              onClick={handleStart}
+              onClick={() => handleStart('signup')}
               className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -120,7 +122,7 @@ export function Navbar() {
               </button>
             ))}
             <button
-              onClick={handleStart}
+              onClick={() => handleStart('signup')}
               className="w-full py-3 px-4 rounded-xl bg-primary text-primary-foreground font-medium mt-2"
             >
               {isAuthenticated ? 'Go to Dashboard' : 'Start Free'}

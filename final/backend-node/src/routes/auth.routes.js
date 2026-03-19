@@ -1,70 +1,102 @@
 const express = require('express');
-const Joi = require('joi');
-const authService = require('../services/auth.service');
+const { getAuth, clerkClient } = require('@clerk/express');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
-const { validate } = require('../middleware/validate');
 
 const router = express.Router();
 
-const signupSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-  fullName: Joi.string().required(),
-});
-
-const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().required(),
-});
-
-// POST /auth/signup
-router.post('/signup', validate(signupSchema), async (req, res, next) => {
+/**
+ * @route   POST /api/v1/auth/sync
+ * @desc    Sync Clerk user with MongoDB (create if doesn't exist)
+ * @access  Private (Clerk Auth)
+ */
+router.post('/sync', async (req, res, next) => {
   try {
-    const result = await authService.signup(req.body);
-    res.status(201).json({ success: true, data: result });
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthenticated' });
+    }
+
+    // Get user details from Clerk
+    const clerkUser = await clerkClient.users.getUser(userId);
+    const email = clerkUser.emailAddresses[0]?.emailAddress;
+    const fullName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
+    const avatarUrl = clerkUser.imageUrl;
+
+    let user = await User.findOne({ clerk_id: userId });
+
+    if (!user && email) {
+      // Try finding by email for existing users migrating to Clerk
+      user = await User.findOne({ email });
+      if (user) {
+        user.clerk_id = userId;
+        if (!user.full_name && fullName) user.full_name = fullName;
+        if (!user.avatar_url && avatarUrl) user.avatar_url = avatarUrl;
+        await user.save();
+      }
+    }
+
+    if (!user) {
+      // Create new user record in MongoDB
+      user = await User.create({
+        clerk_id: userId,
+        email,
+        full_name: fullName || (email ? email.split('@')[0] : 'User'),
+        avatar_url: avatarUrl,
+        subscription_tier: 'free',
+        onboarding_completed: false,
+        // Password is not used with Clerk but model might still have validation for older accounts
+        // We set a random string just in case
+        password: Math.random().toString(36).slice(-12),
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          fullName: user.full_name,
+          avatarUrl: user.avatar_url,
+          subscriptionTier: user.subscription_tier,
+          onboardingCompleted: user.onboarding_completed,
+        }
+      }
+    });
   } catch (error) {
+    console.error('Sync Error:', error);
     next(error);
   }
 });
 
-// POST /auth/login
-router.post('/login', validate(loginSchema), async (req, res, next) => {
-  try {
-    const result = await authService.login(req.body);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// POST /auth/logout
-router.post('/logout', auth, async (req, res) => {
-  // With JWT, logout is handled client-side by discarding the token
-  res.json({ success: true });
-});
-
-// GET /auth/me
+/**
+ * @route   GET /api/v1/auth/me
+ * @desc    Get current user profile from MongoDB
+ * @access  Private
+ */
 router.get('/me', auth, async (req, res, next) => {
   try {
-    const result = await authService.getMe(req.user.id);
-    res.json({ success: true, data: result });
+    // req.user is populated by our 'auth' middleware which maps Clerk ID to MongoDB User
+    res.json({
+      success: true,
+      data: {
+        user: req.user,
+        profile: req.user // For compatibility with frontend expectations
+      }
+    });
   } catch (error) {
     next(error);
   }
 });
 
-// POST /auth/refresh
-router.post('/refresh', async (req, res, next) => {
-  try {
-    const { refreshToken } = req.body;
-    if (!refreshToken) {
-      return res.status(400).json({ success: false, error: 'Refresh token is required' });
-    }
-    const result = await authService.refreshToken(refreshToken);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    next(error);
-  }
+/**
+ * @route   POST /api/v1/auth/logout
+ * @desc    Placeholder for logout (Clerk handles this on frontend)
+ * @access  Public
+ */
+router.post('/logout', (req, res) => {
+  res.json({ success: true });
 });
 
 module.exports = router;

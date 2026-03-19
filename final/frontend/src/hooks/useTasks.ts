@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
+import { useAuth } from '@clerk/clerk-react';
 
 export interface Task {
   id: string;
@@ -22,6 +23,7 @@ export interface CompleteTaskResponse {
 }
 
 export function useTasks(dayNumber?: number, completed?: boolean) {
+  const { userId, isLoaded } = useAuth();
   return useQuery({
     queryKey: ['tasks', { dayNumber, completed }],
     queryFn: async () => {
@@ -32,6 +34,7 @@ export function useTasks(dayNumber?: number, completed?: boolean) {
       const response = await apiClient.get(`/tasks?${params.toString()}`);
       return response.data as Task[];
     },
+    enabled: isLoaded && !!userId,
   });
 }
 
@@ -63,6 +66,33 @@ export function useUncompleteTask() {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       queryClient.invalidateQueries({ queryKey: ['progress'] });
+    },
+  });
+}
+
+export function useUpdateTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Task> }) => {
+      const response = await apiClient.patch(`/tasks/${id}`, updates);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
+export function useDeleteTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await apiClient.delete(`/tasks/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }

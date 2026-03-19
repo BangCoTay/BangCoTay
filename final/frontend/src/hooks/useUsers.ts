@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
+import { useAuth } from '@clerk/clerk-react';
 
 export interface UserProfile {
   id: string;
@@ -70,12 +71,14 @@ function normalizeUserSubscription(raw: any): UserSubscriptionInfo {
 }
 
 export function useUserProfile() {
+  const { userId, isLoaded } = useAuth();
   return useQuery({
     queryKey: ['users', 'profile'],
     queryFn: async () => {
       const response = await apiClient.get('/users/profile');
       return normalizeUserProfile(response.data);
     },
+    enabled: isLoaded && !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
@@ -96,12 +99,14 @@ export function useUpdateProfile() {
 }
 
 export function useUserSubscription() {
+  const { userId, isLoaded } = useAuth();
   return useQuery({
     queryKey: ['users', 'subscription'],
     queryFn: async () => {
       const response = await apiClient.get('/users/subscription');
       return normalizeUserSubscription(response.data);
     },
+    enabled: isLoaded && !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
+import { useAuth } from '@clerk/clerk-react';
 
 export interface Progress {
   currentDay: number;
@@ -28,23 +29,25 @@ export interface Analytics {
 }
 
 export function useProgress() {
+  const { userId, isLoaded } = useAuth();
   return useQuery({
     queryKey: ['progress'],
     queryFn: async () => {
       const response = await apiClient.get('/progress');
-      return response.data as Progress;
+      return response.data;
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
+    enabled: isLoaded && !!userId,
   });
 }
 
-export function useAnalytics() {
+export function useAnalytics(days: number = 7) {
+  const { userId, isLoaded } = useAuth();
   return useQuery({
-    queryKey: ['progress', 'analytics'],
+    queryKey: ['progress', 'analytics', days],
     queryFn: async () => {
-      const response = await apiClient.get('/progress/analytics');
-      return response.data as Analytics;
+      const response = await apiClient.get(`/progress/analytics?days=${days}`);
+      return response.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: isLoaded && !!userId,
   });
 }

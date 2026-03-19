@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
+import { useAuth } from '@clerk/clerk-react';
 
 // Backend returns snake_case fields from Supabase; normalize to camelCase
 function normalizeCurrentPlanResponse(raw: any) {
@@ -26,12 +27,14 @@ function normalizeCurrentPlanResponse(raw: any) {
 }
 
 export function useCurrentPlan() {
+  const { userId, isLoaded } = useAuth();
   return useQuery({
     queryKey: ['plans', 'current'],
     queryFn: async () => {
       const response = await apiClient.get('/plans/current');
       return normalizeCurrentPlanResponse(response.data);
     },
+    enabled: isLoaded && !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
@@ -51,13 +54,14 @@ export function useGeneratePlan() {
   });
 }
 
-export function useDayPlan(planId: string | undefined, dayNumber: number | undefined) {
+export function useDayPlan(date: string) {
+  const { userId, isLoaded } = useAuth();
   return useQuery({
-    queryKey: ['plans', planId, 'day', dayNumber],
+    queryKey: ['plans', 'day', date],
     queryFn: async () => {
-      const response = await apiClient.get(`/plans/${planId}/day/${dayNumber}`);
+      const response = await apiClient.get(`/plans/day/${date}`);
       return response.data;
     },
-    enabled: !!planId && !!dayNumber,
+    enabled: isLoaded && !!userId,
   });
 }

@@ -1,34 +1,70 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth as useAuthQuery } from '@/hooks/useAuth';
-import { authService, type MeResponse } from '@/lib/auth';
+import { useAuth, useUser } from '@clerk/clerk-react';
+import apiClient, { setTokenGetter } from '@/lib/api-client';
+
+interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  avatarUrl?: string;
+  subscriptionTier: string;
+  onboardingCompleted: boolean;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: MeResponse | null;
-  checkAuth: () => void;
+  user: User | null;
+  signOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
-  const { data: userData, isLoading, refetch } = useAuthQuery();
+  const { isLoaded, userId, getToken, signOut: clerkSignOut } = useAuth();
+  const [dbUser, setDbUser] = useState<User | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
+  // Initialize the API client with the Clerk token getter
   useEffect(() => {
-    // Update authentication state when user data changes
-    setIsAuthenticated(!!userData);
-  }, [userData]);
+    setTokenGetter(getToken);
+  }, [getToken]);
 
-  const checkAuth = () => {
-    setIsAuthenticated(authService.isAuthenticated());
-    if (authService.isAuthenticated()) {
-      refetch();
-    }
-  };
+  // Sync Clerk user with our backend database
+  useEffect(() => {
+    const syncUser = async () => {
+      if (isLoaded && userId && !dbUser && !isSyncing) {
+        setIsSyncing(true);
+        try {
+          // This call will include the Clerk token via the interceptor
+          const { data } = await apiClient.post('/auth/sync');
+          if (data.success) {
+            setDbUser(data.data.user);
+          }
+        } catch (error) {
+          console.error('Failed to sync user with backend:', error);
+        } finally {
+          setIsSyncing(false);
+        }
+      } else if (isLoaded && !userId) {
+        setDbUser(null);
+      }
+    };
+
+    syncUser();
+  }, [isLoaded, userId, dbUser, isSyncing]);
+
+  const isLoading = !isLoaded || isSyncing;
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user: userData ?? null, checkAuth }}>
+    <AuthContext.Provider 
+      value={{ 
+        isAuthenticated: !!userId, 
+        isLoading, 
+        user: dbUser,
+        signOut: clerkSignOut 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
