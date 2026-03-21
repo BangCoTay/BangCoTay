@@ -86,15 +86,15 @@ export function Dashboard() {
 
       {/* Main content - 3 column layout */}
       <main className="max-w-[1800px] mx-auto px-4 sm:px-6 py-6">
-        <div className="grid lg:grid-cols-[3.5fr_5fr_3.5fr] gap-6 h-[calc(100vh-120px)]">
+        <div className="grid lg:grid-cols-[3.5fr_5fr_3.5fr] gap-3 h-[calc(100vh-120px)]">
           {/* Left panel - AI Coach */}
           <motion.div
-            className="h-full"
+            className="h-full min-h-0 overflow-hidden"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <AICoachPanel />
+            <AICoachPanel onUpgrade={() => setIsUpgradeModalOpen(true)} />
           </motion.div>
 
           {/* Center panel - Plan */}
@@ -104,9 +104,9 @@ export function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <PlanPanel />
+            <PlanPanel onUpgrade={() => setIsUpgradeModalOpen(true)} />
           </motion.div>
-
+ 
           {/* Right panel - Quotes */}
           <motion.div
             className="h-full"
@@ -114,7 +114,7 @@ export function Dashboard() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <QuotesPanel />
+            <QuotesPanel onUpgrade={() => setIsUpgradeModalOpen(true)} />
           </motion.div>
         </div>
       </main>

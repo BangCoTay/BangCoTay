@@ -108,11 +108,16 @@ const completeTask = async (userId, taskId) => {
 
     // Pick a random celebration message
     const { CELEBRATION_MESSAGES } = require('../constants/celebration-messages');
-    const randomCelebration = CELEBRATION_MESSAGES[Math.floor(Math.random() * CELEBRATION_MESSAGES.length)];
     
-    const celebrationSummary = allCompleted
-      ? `Tuyệt vời! Bạn đã hoàn thành tất cả các nhiệm vụ hôm nay! Chuỗi ngày (streak): ${newStreak} ngày.`
-      : randomCelebration;
+    // Choose a random category first (coach, friend, family, girlfriend)
+    const categories = Object.keys(CELEBRATION_MESSAGES);
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+    const messages = CELEBRATION_MESSAGES[randomCategory];
+    
+    // Choose a random message from the selected category
+    const randomCelebration = messages[Math.floor(Math.random() * messages.length)];
+    
+    const celebrationSummary = randomCelebration;
 
     // Generate a chat message from AI Coach
     try {
