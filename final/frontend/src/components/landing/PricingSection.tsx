@@ -1,9 +1,21 @@
 import { motion } from 'framer-motion';
 import { Check, Sparkles, Zap, Crown } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 
 export function PricingSection() {
   const { setCurrentView } = useAppStore();
+  const { isAuthenticated } = useAuthContext();
+  const [_, setSearchParams] = useSearchParams();
+
+  const handleStart = () => {
+    if (isAuthenticated) {
+      setCurrentView('onboarding');
+      return;
+    }
+    setSearchParams({ auth_mode: 'signup' });
+  };
 
   const plans = [
     {
@@ -132,7 +144,7 @@ export function PricingSection() {
                 }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setCurrentView('onboarding')}
+                onClick={handleStart}
               >
                 {plan.cta}
               </motion.button>

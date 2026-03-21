@@ -45,7 +45,7 @@ const generateCoachResponse = async (messages, coachPersona, userContext, subscr
     throw new Error('OpenAI not configured');
   }
 
-  const model = subscriptionTier === 'premium' ? 'gpt-4' : 'gpt-3.5-turbo';
+  const model = 'gpt-5-nano';
   const systemPrompt = buildSystemPrompt(coachPersona, userContext);
 
   const completion = await openai.chat.completions.create({

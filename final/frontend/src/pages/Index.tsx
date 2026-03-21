@@ -87,20 +87,31 @@ const Index = () => {
     );
   }
 
+  // Determine which component to show based on auth state and currentView
+  // This prevents the "landing page flash" for authenticated users
+  let viewToShow = currentView;
+  if (isAuthenticated && !isLoadingOnboarding) {
+    if (currentView === 'landing') {
+      viewToShow = onboardingData ? 'dashboard' : 'onboarding';
+    }
+  } else if (!isAuthenticated && currentView !== 'onboarding' && currentView !== 'landing') {
+    viewToShow = 'landing';
+  }
+
   return (
     <>
       <AnimatePresence mode="wait">
-      <motion.div
-        key={currentView}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        {currentView === 'landing' && <LandingPage />}
-        {currentView === 'onboarding' && <OnboardingFlow />}
-        {currentView === 'dashboard' && <Dashboard />}
-      </motion.div>
+        <motion.div
+          key={viewToShow}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {viewToShow === 'landing' && <LandingPage />}
+          {viewToShow === 'onboarding' && <OnboardingFlow />}
+          {viewToShow === 'dashboard' && <Dashboard />}
+        </motion.div>
       </AnimatePresence>
       {isAuthModalOpen && <AuthModal onClose={handleCloseAuthModal} />}
     </>

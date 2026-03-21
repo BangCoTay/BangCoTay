@@ -5,18 +5,13 @@ import { AICoachPanel } from "@/components/AICoachPanel";
 import { PlanPanel } from "@/components/PlanPanel";
 import { QuotesPanel } from "@/components/QuotesPanel";
 import { UpgradeModal } from "@/components/UpgradeModal";
-import { useLogout } from "@/hooks/useAuth";
+import { UserButton } from "@clerk/clerk-react";
 import { useUserProfile } from "@/hooks/useUsers";
-import { Sparkles, LogOut, Crown, Loader2, Zap } from "lucide-react";
+import { Sparkles, Crown, Loader2, Zap } from "lucide-react";
 
 export function Dashboard() {
-  const logout = useLogout();
   const { data: userProfile, isLoading } = useUserProfile();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-
-  const handleLogout = () => {
-    logout.mutate();
-  };
 
   const showUpgradeButton = userProfile?.subscriptionTier === "free";
 
@@ -67,18 +62,14 @@ export function Dashboard() {
 
               <ThemeToggle />
 
-              <button
-                onClick={handleLogout}
-                disabled={logout.isPending}
-                className="p-2 rounded-xl hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
-                title="Logout"
-              >
-                {logout.isPending ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <LogOut className="w-5 h-5" />
-                )}
-              </button>
+              <UserButton 
+                afterSignOutUrl="/" 
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "w-10 h-10 rounded-xl"
+                  }
+                }}
+              />
             </div>
           </div>
         </div>
