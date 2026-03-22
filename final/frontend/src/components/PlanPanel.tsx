@@ -35,7 +35,8 @@ export function PlanPanel({ onUpgrade }: PlanPanelProps) {
   const coach = onboardingData?.niche
     ? COACHES[onboardingData.niche]
     : COACHES.health;
-  const plan = planData?.dayPlans || [];
+  const planDataNormalized = planData as any;
+  const plan = planDataNormalized?.dayPlans || [];
   const subscriptionTier = subscription?.tier || "free";
 
   const handleToggleTask = async (
@@ -52,8 +53,20 @@ export function PlanPanel({ onUpgrade }: PlanPanelProps) {
           colors: ["#14b8a6", "#f97316", "#8b5cf6", "#ec4899"],
         });
 
-        await completeTask.mutateAsync(taskId);
+        const result = await completeTask.mutateAsync(taskId) as any;
         toast.success("Task completed! 🚀");
+
+        // Show toast notifications for companion messages if they exist (Premium)
+        if (result?.companionMessages && Array.isArray(result.companionMessages)) {
+          result.companionMessages.forEach((msg: any) => {
+            setTimeout(() => {
+              toast(`${msg.name} says:`, {
+                description: msg.content,
+                icon: "✨",
+              });
+            }, 500); // Slight delay for better UX
+          });
+        }
       } else {
         await uncompleteTask.mutateAsync(taskId);
       }
@@ -124,7 +137,8 @@ export function PlanPanel({ onUpgrade }: PlanPanelProps) {
       {/* Days list */}
       <div className="flex-1 overflow-y-auto space-y-3 pr-2">
         {plan.map((dayPlan) => {
-          const isLocked = !dayPlan.unlocked;
+          const isPaidTier = subscriptionTier === "starter" || subscriptionTier === "premium";
+          const isLocked = !dayPlan.unlocked && !isPaidTier;
           const isExpanded = expandedDay === dayPlan.dayNumber;
           const dayProgress = getDayProgress(dayPlan.dayNumber);
           const isComplete = dayProgress === 100;

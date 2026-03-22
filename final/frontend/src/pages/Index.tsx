@@ -7,8 +7,10 @@ import { OnboardingFlow } from '@/components/OnboardingFlow';
 import { Dashboard } from '@/components/Dashboard';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { AuthModal } from '@/components/AuthModal';
 import { useState } from 'react';
+import apiClient from '@/lib/api-client';
 
 const Index = () => {
   const { currentView, isDarkMode, setCurrentView } = useAppStore();
@@ -37,17 +39,45 @@ const Index = () => {
     }
   }, [searchParams, isAuthenticated]);
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     // Handle payment status from URL params
     const paymentStatus = searchParams.get('payment');
+    const sessionId = searchParams.get('session_id');
+
     if (paymentStatus === 'success') {
-      import('sonner').then(({ toast }) => {
-        toast.success('Payment successful! Welcome to the premium club.');
-      });
-      // Remove payment param from URL
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('payment');
-      setSearchParams(newParams);
+      const verifyPayment = async () => {
+        try {
+          if (sessionId) {
+            import('sonner').then(({ toast }) => toast.info('Verifying payment...'));
+            await apiClient.get(`/payments/verify-session?session_id=${sessionId}`);
+          }
+          
+          import('sonner').then(({ toast }) => {
+            toast.success('Payment successful! Welcome to the premium club.');
+          });
+          
+          // Force refresh user profile and onboarding data to reflect the new tier
+          queryClient.invalidateQueries({ queryKey: ['users', 'profile'] });
+          queryClient.invalidateQueries({ queryKey: ['users', 'subscription'] });
+          queryClient.invalidateQueries({ queryKey: ['onboarding'] });
+          queryClient.invalidateQueries({ queryKey: ['plans'] });
+          
+          // Remove payment param from URL
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('payment');
+          newParams.delete('session_id');
+          setSearchParams(newParams);
+        } catch (error) {
+          console.error('Payment verification failed:', error);
+          import('sonner').then(({ toast }) => {
+            toast.error('Could not verify payment status automatically. If you have any issues, please refresh.');
+          });
+        }
+      };
+      
+      verifyPayment();
     } else if (paymentStatus === 'canceled') {
       import('sonner').then(({ toast }) => {
         toast.error('Payment canceled. No worries, you can try again anytime.');
@@ -55,9 +85,10 @@ const Index = () => {
       // Remove payment param from URL
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('payment');
+      newParams.delete('session_id');
       setSearchParams(newParams);
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, queryClient]);
 
   const handleCloseAuthModal = () => {
     setIsAuthModalOpen(false);

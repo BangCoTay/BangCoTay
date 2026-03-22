@@ -35,7 +35,6 @@ const userSchema = new mongoose.Schema(
     },
     stripe_customer_id: {
       type: String,
-      unique: true,
       sparse: true,
     },
     onboarding_completed: {

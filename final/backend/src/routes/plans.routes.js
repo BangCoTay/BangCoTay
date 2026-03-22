@@ -17,7 +17,7 @@ router.post('/generate', auth, async (req, res, next) => {
 // GET /plans/current
 router.get('/current', auth, async (req, res, next) => {
   try {
-    const result = await plansService.getCurrentPlan(req.user.id);
+    const result = await plansService.getCurrentPlan(req.user.id, req.user.subscriptionTier);
     res.json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -31,7 +31,7 @@ router.get('/:planId/day/:dayNumber', auth, async (req, res, next) => {
     if (isNaN(dayNumber)) {
       return res.status(400).json({ success: false, error: 'Invalid day number' });
     }
-    const result = await plansService.getDayPlan(req.user.id, req.params.planId, dayNumber);
+    const result = await plansService.getDayPlan(req.user.id, req.params.planId, dayNumber, req.user.subscriptionTier);
     res.json({ success: true, data: result });
   } catch (error) {
     next(error);

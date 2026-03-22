@@ -53,10 +53,15 @@ interface RawSendMessageResponse {
   messages_remaining?: number;
 }
 
+const VALID_ROLES: ChatMessage['role'][] = ['user', 'assistant', 'friend', 'family', 'girlfriend'];
+
 function normalizeChatMessage(raw: unknown): ChatMessage {
   const r = raw as RawChatMessage | undefined;
-  const role =
-    r?.role === 'user' || r?.role === 'assistant' ? r.role : ('user' as const);
+  // Preserve ALL valid roles — friend/family/girlfriend are persona celebration messages
+  const rawRole = r?.role as string | undefined;
+  const role: ChatMessage['role'] = VALID_ROLES.includes(rawRole as ChatMessage['role'])
+    ? (rawRole as ChatMessage['role'])
+    : 'user';
 
   return {
     id: r?.id ?? r?._id ?? '',
@@ -101,13 +106,15 @@ function normalizeSendMessageResponse(raw: unknown): SendMessageResponse {
   };
 }
 
-export function useChatMessages(limit = 50, offset = 0) {
+// role: 'coach' | 'friend' | 'family' | 'girlfriend' — or undefined to fetch all
+export function useChatMessages(role?: string, limit = 50, offset = 0) {
   const { userId, isLoaded } = useAuth();
   return useQuery({
-    queryKey: ['chat', 'messages', { limit, offset }],
+    queryKey: ['chat', 'messages', role ?? 'all', { limit, offset }],
     queryFn: async () => {
+      const roleParam = role ? `&role=${role}` : '';
       const response = await apiClient.get(
-        `/chat/messages?limit=${limit}&offset=${offset}`,
+        `/chat/messages?limit=${limit}&offset=${offset}${roleParam}`,
       );
       return normalizeChatMessagesResponse(response.data.data);
     },

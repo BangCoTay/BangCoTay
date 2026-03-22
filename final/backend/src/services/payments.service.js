@@ -1,8 +1,11 @@
 const config = require('../config');
 const Stripe = require('stripe');
 const User = require('../models/User');
+const Plan = require('../models/Plan');
+const DayPlan = require('../models/DayPlan');
 const Subscription = require('../models/Subscription');
 const PaymentHistory = require('../models/PaymentHistory');
+const { SUBSCRIPTION_LIMITS } = require('../constants/subscription-limits');
 
 let stripe = null;
 if (config.stripe.secretKey) {
@@ -39,7 +42,7 @@ const createCheckout = async (userId, { priceId, tier }) => {
     mode: 'payment',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${config.frontendUrl}/dashboard?payment=success`,
+    success_url: `${config.frontendUrl}/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${config.frontendUrl}/dashboard?payment=canceled`,
     metadata: { userId, tier, priceId },
   };
@@ -146,7 +149,7 @@ const handleCheckoutCompleted = async (session) => {
     { user_id: userId },
     {
       user_id: userId,
-      stripe_subscription_id: subscriptionId || null,
+      stripe_subscription_id: subscriptionId,
       stripe_price_id: priceId || null,
       tier,
       status,
@@ -170,6 +173,34 @@ const handleCheckoutCompleted = async (session) => {
   }
 
   await User.findByIdAndUpdate(userId, { subscription_tier: tier });
+
+  // Unlock additional plan days based on new tier
+  await unlockPlanDaysAfterUpgrade(userId, tier);
+};
+
+const unlockPlanDaysAfterUpgrade = async (userId, tier) => {
+  try {
+    const plan = await Plan.findOne({ user_id: userId, is_active: true });
+    if (!plan) {
+      console.log(`No active plan found for user ${userId} to unlock days for.`);
+      return;
+    }
+
+    const limits = SUBSCRIPTION_LIMITS[tier] || SUBSCRIPTION_LIMITS.free;
+    const daysToUnlock = limits.daysUnlocked;
+
+    if (!daysToUnlock) return;
+
+    // Unlock all days up to the new limit
+    const updateResult = await DayPlan.updateMany(
+      { plan_id: plan._id, day_number: { $lte: daysToUnlock }, unlocked: false },
+      { unlocked: true, unlocked_at: new Date() }
+    );
+
+    console.log(`Successfully unlocked ${updateResult.modifiedCount} days for user ${userId} (tier: ${tier}, planId: ${plan._id})`);
+  } catch (err) {
+    console.error('CRITICAL: Error unlocking plan days after upgrade:', err);
+  }
 };
 
 const handleSubscriptionUpdated = async (subscription) => {
@@ -242,4 +273,30 @@ const handlePaymentFailed = async (invoice) => {
   );
 };
 
-module.exports = { createCheckout, getPortal, handleWebhook };
+const verifySession = async (userId, sessionId) => {
+  if (!stripe) throw new Error('Stripe not configured');
+
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  if (!session) {
+    const error = new Error('Session not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Ensure the session belongs to the user
+  const sessionUserId = session.client_reference_id || session.metadata?.userId;
+  if (sessionUserId !== userId) {
+    const error = new Error('Unauthorized: This session does not belong to you');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  if (session.payment_status === 'paid') {
+    await handleCheckoutCompleted(session);
+    return { success: true, tier: session.metadata?.tier || 'starter' };
+  }
+
+  return { success: false, status: session.payment_status };
+};
+
+module.exports = { createCheckout, getPortal, handleWebhook, verifySession };

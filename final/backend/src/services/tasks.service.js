@@ -63,7 +63,9 @@ const completeTask = async (userId, taskId, subscriptionTier) => {
     throw error;
   }
 
-  if (!task.day_plan_id.unlocked) {
+  const isPaidUser = subscriptionTier && subscriptionTier !== 'free';
+
+  if (!task.day_plan_id.unlocked && !isPaidUser) {
     const error = new Error('This day is locked. Upgrade to unlock more days.');
     error.statusCode = 403;
     throw error;
@@ -130,6 +132,8 @@ const completeTask = async (userId, taskId, subscriptionTier) => {
         sender_name: coach.name,
       });
 
+      let companionMessages = [];
+
       // 2. Extra Persona Messages - Only for premium
       if (isPremium) {
         // Friend Message
@@ -141,6 +145,7 @@ const completeTask = async (userId, taskId, subscriptionTier) => {
           content: friendMsg,
           sender_name: 'Best Friend',
         });
+        companionMessages.push({ role: 'friend', content: friendMsg, name: 'Best Friend' });
 
         // Family Message
         const familyMessages = CELEBRATION_MESSAGES.family;
@@ -149,8 +154,9 @@ const completeTask = async (userId, taskId, subscriptionTier) => {
           user_id: userId,
           role: 'family',
           content: familyMsg,
-          sender_name: 'Family',
+          sender_name: 'Family Member',
         });
+        companionMessages.push({ role: 'family', content: familyMsg, name: 'Family Member' });
 
         // Girlfriend (Sweetheart) Message
         const gfMessages = CELEBRATION_MESSAGES.girlfriend;
@@ -161,20 +167,27 @@ const completeTask = async (userId, taskId, subscriptionTier) => {
           content: gfMsg,
           sender_name: 'Sweetheart',
         });
+        companionMessages.push({ role: 'girlfriend', content: gfMsg, name: 'Sweetheart' });
       }
+      
+      const response = {
+        task,
+        progress: {
+          totalTasksCompleted: progress.total_tasks_completed,
+          streakDays: newStreak,
+        },
+        streakUpdated: newStreak > progress.streak_days - 1,
+        celebrationMessage: coachCelebration,
+      };
+
+      if (isPremium) {
+        response.companionMessages = companionMessages;
+      }
+      
+      return response;
     } catch (chatError) {
       console.error('Failed to create celebration chat messages:', chatError);
     }
-
-    return {
-      task,
-      progress: {
-        totalTasksCompleted: progress.total_tasks_completed,
-        streakDays: newStreak,
-      },
-      streakUpdated: newStreak > progress.streak_days - 1,
-      celebrationMessage: coachCelebration,
-    };
   }
 
   return { task, message: 'Task completed successfully' };

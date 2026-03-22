@@ -45,4 +45,18 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   }
 });
 
+// GET /payments/verify-session?session_id=...
+router.get('/verify-session', auth, async (req, res, next) => {
+  try {
+    const sessionId = req.query.session_id;
+    if (!sessionId) {
+      return res.status(400).json({ success: false, error: 'session_id is required' });
+    }
+    const result = await paymentsService.verifySession(req.user.id, sessionId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

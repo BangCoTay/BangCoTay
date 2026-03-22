@@ -39,14 +39,16 @@ const getSubscription = async (userId) => {
 
   return {
     tier,
-    status: subscription?.status || 'free',
+    status: subscription?.status || (tier === 'free' ? 'free' : 'active'),
     currentPeriodEnd: subscription?.current_period_end,
     cancelAtPeriodEnd: subscription?.cancel_at_period_end || false,
     features: limits.features,
     limits: {
       daysUnlocked: limits.daysUnlocked,
+      aiMessagesTotal: limits.aiMessagesTotal,
       aiMessagesPerDay: limits.aiMessagesPerDay,
       quoteRegenerationsPerDay: limits.quoteRegenerationsPerDay,
+      hasAICompanion: limits.hasAICompanion,
     },
   };
 };

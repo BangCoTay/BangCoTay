@@ -9,7 +9,6 @@ const subscriptionSchema = new mongoose.Schema(
     },
     stripe_subscription_id: {
       type: String,
-      unique: true,
       sparse: true,
     },
     stripe_price_id: {

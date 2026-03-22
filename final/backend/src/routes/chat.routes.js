@@ -26,7 +26,9 @@ router.get('/messages', auth, async (req, res, next) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : 50;
     const offset = req.query.offset ? parseInt(req.query.offset, 10) : 0;
-    const result = await chatService.getMessages(req.user.id, limit, offset);
+    // Optional 'role' query param: 'coach' | 'friend' | 'family' | 'girlfriend'
+    const role = req.query.role || null;
+    const result = await chatService.getMessages(req.user.id, role, limit, offset);
     res.json({ success: true, data: result });
   } catch (error) {
     next(error);

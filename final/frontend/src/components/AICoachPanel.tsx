@@ -23,7 +23,6 @@ interface AICoachPanelProps {
 
 export function AICoachPanel({ onUpgrade }: AICoachPanelProps) {
   const { data: onboardingData } = useOnboarding();
-  const { data: chatData, isLoading: chatLoading } = useChatMessages();
   const { data: progress } = useProgress();
   const { data: subscription } = useUserSubscription();
   const sendMessage = useSendMessage();
@@ -38,19 +37,20 @@ export function AICoachPanel({ onUpgrade }: AICoachPanelProps) {
   const coach = onboardingData?.niche
     ? COACHES[onboardingData.niche]
     : COACHES.health;
-  const isPremium = subscription?.subscriptionTier === "premium";
-  const hasAICompanion = subscription?.features?.hasAICompanion;
+  const isPremium = subscription?.tier === "premium";
+  const hasAICompanion = subscription?.features?.hasAICompanion ?? false;
 
-  const chatMessages = useMemo(() => chatData?.messages || [], [chatData]);
+  // Map persona to the role filter expected by the API
+  const roleFilter =
+    selectedPersona === "coach" ? "coach" : selectedPersona;
 
-  const filteredMessages = useMemo(() => {
-    if (selectedPersona === "coach") {
-      return chatMessages.filter(
-        (m) => m.role === "user" || m.role === "assistant",
-      );
-    }
-    return chatMessages.filter((m) => m.role === selectedPersona);
-  }, [chatMessages, selectedPersona]);
+  // Each persona tab fetches ONLY its own messages from the server
+  const { data: chatData, isLoading: chatLoading } = useChatMessages(roleFilter);
+
+  const filteredMessages = useMemo(
+    () => chatData?.messages || [],
+    [chatData],
+  );
 
   useEffect(() => {
     if (!subscription || !progress) {
@@ -71,7 +71,7 @@ export function AICoachPanel({ onUpgrade }: AICoachPanelProps) {
 
   const canSendMessage =
     messagesRemaining === null || (messagesRemaining ?? 0) > 0;
-  const canAccessPersona = selectedPersona === "coach" || isPremium;
+  const canAccessPersona = selectedPersona === "coach" || hasAICompanion;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -98,6 +98,7 @@ export function AICoachPanel({ onUpgrade }: AICoachPanelProps) {
       }
 
       if (
+        !isPremium &&
         result.messagesRemaining !== null &&
         result.messagesRemaining >= 0 &&
         result.messagesRemaining <= 2
@@ -123,7 +124,7 @@ export function AICoachPanel({ onUpgrade }: AICoachPanelProps) {
   };
 
   const handlePersonaChange = (persona: Persona) => {
-    if (persona !== "coach" && !isPremium) {
+    if (persona !== "coach" && !hasAICompanion) {
       onUpgrade();
       return;
     }
@@ -190,12 +191,12 @@ export function AICoachPanel({ onUpgrade }: AICoachPanelProps) {
             </p>
           </div>
         </div>
-        {selectedPersona !== "coach" && isPremium && (
+        {selectedPersona !== "coach" && hasAICompanion && (
           <p className="text-xs text-muted-foreground mt-2 italic">
             {currentPersona.description}
           </p>
         )}
-        {!isPremium && selectedPersona !== "coach" && (
+        {!hasAICompanion && selectedPersona !== "coach" && (
           <button
             onClick={onUpgrade}
             className="w-full mt-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-center gap-2 hover:bg-amber-500/20 transition-all"
@@ -247,28 +248,17 @@ export function AICoachPanel({ onUpgrade }: AICoachPanelProps) {
                   {message.role !== "user" && (
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs text-muted-foreground">
-                        {selectedPersona === "coach"
+                        {message.role === "assistant"
                           ? coach.name
-                          : currentPersona.name}
+                          : PERSONAS[message.role as keyof typeof PERSONAS]?.name || currentPersona.name}
                       </span>
-                      {message.model && (
-                        <span className="text-xs text-muted-foreground/50">
-                          • {message.model}
-                        </span>
-                      )}
                     </div>
                   )}
                   <div
                     className={cn(
                       message.role === "user"
                         ? "chat-bubble-user"
-                        : selectedPersona === "girlfriend"
-                          ? "bg-pink-500/20 border border-pink-500/30"
-                          : selectedPersona === "friend"
-                            ? "bg-blue-500/20 border border-blue-500/30"
-                            : selectedPersona === "family"
-                              ? "bg-green-500/20 border border-green-500/30"
-                              : "chat-bubble-assistant",
+                        : "chat-bubble-assistant",
                     )}
                   >
                     <p className="text-sm whitespace-pre-wrap">
@@ -310,16 +300,16 @@ export function AICoachPanel({ onUpgrade }: AICoachPanelProps) {
       {/* Input */}
       {showInput && (
         <div className="p-4 border-t">
-          {messagesRemaining !== null && (
-            <div className="mb-2 text-center">
-              <span className="text-xs text-muted-foreground">
+          {subscription?.tier === "free" && messagesRemaining !== null && (
+            <div className="mb-2 text-center underline-offset-4">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
                 {messagesRemaining > 0 ? (
                   `${messagesRemaining} message${
                     messagesRemaining > 1 ? "s" : ""
-                  } remaining`
+                  } left`
                 ) : (
                   <span
-                    className="text-accent underline cursor-pointer"
+                    className="text-primary hover:underline cursor-pointer"
                     onClick={onUpgrade}
                   >
                     Upgrade to continue chatting
@@ -375,7 +365,7 @@ export function AICoachPanel({ onUpgrade }: AICoachPanelProps) {
         </div>
       )}
 
-      {selectedPersona !== "coach" && isPremium && (
+      {selectedPersona !== "coach" && hasAICompanion && (
         <div className="p-4 border-t bg-secondary/20">
           <p className="text-xs text-muted-foreground text-center">
             💡 {currentPersona.name} sends you celebration messages when you

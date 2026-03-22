@@ -29,15 +29,21 @@ const generatePlan = async (userId, subscriptionTier) => {
   return planResult;
 };
 
-const getCurrentPlan = async (userId) => {
+const getCurrentPlan = async (userId, subscriptionTier = 'free') => {
   const plan = await Plan.findOne({ user_id: userId, is_active: true });
   if (!plan) return null;
 
   const dayPlans = await DayPlan.find({ plan_id: plan._id }).sort({ day_number: 1 }).lean();
 
-  // Attach tasks to each day plan
+  // Attach tasks to each day plan and force unlock if on a paid plan
   for (const dayPlan of dayPlans) {
     dayPlan.tasks = await Task.find({ day_plan_id: dayPlan._id }).sort({ task_order: 1 }).lean();
+    
+    // Safety check: if user has a paid plan, allow them to see all 30 days
+    // even if the database state hasn't been updated yet due to webhook delays
+    if (subscriptionTier && subscriptionTier !== 'free') {
+      dayPlan.unlocked = true;
+    }
   }
 
   const progress = await UserProgress.findOne({ plan_id: plan._id });
@@ -49,7 +55,7 @@ const getCurrentPlan = async (userId) => {
   };
 };
 
-const getDayPlan = async (userId, planId, dayNumber) => {
+const getDayPlan = async (userId, planId, dayNumber, subscriptionTier = 'free') => {
   const plan = await Plan.findOne({ _id: planId, user_id: userId });
   if (!plan) {
     const error = new Error('Plan not found');
@@ -62,6 +68,11 @@ const getDayPlan = async (userId, planId, dayNumber) => {
     const error = new Error('Day plan not found');
     error.statusCode = 404;
     throw error;
+  }
+
+  // Handle premium unlocking in the response layer
+  if (subscriptionTier && subscriptionTier !== 'free') {
+    dayPlan.unlocked = true;
   }
 
   dayPlan.tasks = await Task.find({ day_plan_id: dayPlan._id }).sort({ task_order: 1 }).lean();
