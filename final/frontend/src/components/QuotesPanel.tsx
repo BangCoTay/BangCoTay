@@ -2,32 +2,35 @@ import { motion } from 'framer-motion';
 import { useQuotes, useRegenerateQuotes } from '@/hooks/useQuotes';
 import { RefreshCw, Lock, Sparkles, Quote, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
-export function QuotesPanel() {
+interface QuotesPanelProps {
+  onUpgrade: () => void;
+}
+
+export function QuotesPanel({ onUpgrade }: QuotesPanelProps) {
   const { data: quotesData, isLoading } = useQuotes();
   const regenerateMutation = useRegenerateQuotes();
-  const { toast } = useToast();
 
   const quotes = quotesData?.quotes || [];
   const regenerationsRemaining = quotesData?.regenerationsRemaining;
   const canRegenerate = regenerationsRemaining === null || regenerationsRemaining > 0;
 
-  const handleRegenerate = async () => {
-    if (!canRegenerate) return;
+  const handleAction = async () => {
+    if (!canRegenerate) {
+      onUpgrade();
+      return;
+    }
+
+    if (regenerateMutation.isPending) return;
 
     try {
       await regenerateMutation.mutateAsync();
-      toast({
-        title: '✨ New quotes generated!',
+      toast.success('✨ New quotes generated!', {
         description: 'Your daily motivation has been refreshed.',
       });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to regenerate quotes. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to regenerate quotes. Please try again.');
     }
   };
 
@@ -44,10 +47,10 @@ export function QuotesPanel() {
   return (
     <div className="flex flex-col h-full bg-card rounded-2xl border overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b bg-secondary/30">
+      <div className="p-4 border-b">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-warning flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-accent-foreground" />
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-warning flex items-center justify-center">
+            <Sparkles className="w-6 h-6 text-accent-foreground" />
           </div>
           <div>
             <h3 className="font-semibold">Daily Motivation</h3>
@@ -107,13 +110,13 @@ export function QuotesPanel() {
         )}
 
         <button
-          onClick={handleRegenerate}
-          disabled={!canRegenerate || regenerateMutation.isPending}
+          onClick={handleAction}
+          disabled={regenerateMutation.isPending}
           className={cn(
             "w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all",
             canRegenerate && !regenerateMutation.isPending
               ? "bg-secondary hover:bg-secondary/80 text-foreground"
-              : "bg-muted text-muted-foreground cursor-not-allowed"
+              : "bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90"
           )}
         >
           {regenerateMutation.isPending ? (
@@ -128,8 +131,8 @@ export function QuotesPanel() {
             </>
           ) : (
             <>
-              <Lock className="w-4 h-4" />
-              Upgrade to Regenerate
+              <Sparkles className="w-4 h-4" />
+              Upgrade
             </>
           )}
         </button>

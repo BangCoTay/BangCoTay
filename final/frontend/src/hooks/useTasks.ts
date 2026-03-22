@@ -81,10 +81,33 @@ export function useCompleteTask() {
         task: normalizeTask(raw.task),
       } as CompleteTaskResponse;
     },
-    onSuccess: () => {
+    onMutate: async (taskId) => {
+      await queryClient.cancelQueries({ queryKey: ["plans", "current"] });
+      const previousPlans = queryClient.getQueryData(["plans", "current"]);
+
+      queryClient.setQueryData(["plans", "current"], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          dayPlans: old.dayPlans.map((dayPlan: any) => ({
+            ...dayPlan,
+            tasks: dayPlan.tasks?.map((task: any) =>
+              task.id === taskId ? { ...task, completed: true } : task
+            ),
+          })),
+        };
+      });
+
+      return { previousPlans };
+    },
+    onError: (_err, _taskId, context) => {
+      queryClient.setQueryData(["plans", "current"], context?.previousPlans);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["plans"] });
       queryClient.invalidateQueries({ queryKey: ["progress"] });
+      queryClient.invalidateQueries({ queryKey: ["chat", "messages"] });
     },
   });
 }
@@ -97,11 +120,32 @@ export function useUncompleteTask() {
       const response = await apiClient.post(`/tasks/${taskId}/uncomplete`);
       return response.data.data;
     },
-    onSuccess: () => {
+    onMutate: async (taskId) => {
+      await queryClient.cancelQueries({ queryKey: ["plans", "current"] });
+      const previousPlans = queryClient.getQueryData(["plans", "current"]);
+
+      queryClient.setQueryData(["plans", "current"], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          dayPlans: old.dayPlans.map((dayPlan: any) => ({
+            ...dayPlan,
+            tasks: dayPlan.tasks?.map((task: any) =>
+              task.id === taskId ? { ...task, completed: false } : task
+            ),
+          })),
+        };
+      });
+
+      return { previousPlans };
+    },
+    onError: (_err, _taskId, context) => {
+        queryClient.setQueryData(["plans", "current"], context?.previousPlans);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["plans"] });
       queryClient.invalidateQueries({ queryKey: ["progress"] });
-      queryClient.invalidateQueries({ queryKey: ["chat", "messages"] });
     },
   });
 }

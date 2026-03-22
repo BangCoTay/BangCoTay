@@ -5,7 +5,7 @@ const SUBSCRIPTION_LIMITS = {
     aiMessagesTotal: 5,
     // aiMessagesPerDay kept for backward compat but set to -1 (not used for limit checks)
     aiMessagesPerDay: -1,
-    quoteRegenerationsPerDay: -1,
+    quoteRegenerationsPerDay: 3,
     hasAICompanion: false,
     features: ['3-day plan preview', '5 AI coach messages', 'Basic motivation quotes', 'Progress tracking'],
   },

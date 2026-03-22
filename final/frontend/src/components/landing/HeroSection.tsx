@@ -1,12 +1,20 @@
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/appStore';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowRight, Play, CheckCircle2, Sparkles, MessageCircle } from 'lucide-react';
 
 export function HeroSection() {
   const { setCurrentView } = useAppStore();
+  const { isAuthenticated } = useAuthContext();
+  const [_, setSearchParams] = useSearchParams();
 
   const handleStart = () => {
-    setCurrentView('onboarding');
+    if (isAuthenticated) {
+      setCurrentView('onboarding');
+      return;
+    }
+    setSearchParams({ auth_mode: 'signup' });
   };
 
   const scrollToHowItWorks = () => {

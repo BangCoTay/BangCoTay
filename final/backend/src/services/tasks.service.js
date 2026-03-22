@@ -51,7 +51,7 @@ const getTasks = async (userId, dayNumber, completed) => {
   }));
 };
 
-const completeTask = async (userId, taskId) => {
+const completeTask = async (userId, taskId, subscriptionTier) => {
   const task = await Task.findOne({ _id: taskId, user_id: userId }).populate(
     'day_plan_id',
     'unlocked plan_id'
@@ -106,15 +106,15 @@ const completeTask = async (userId, taskId) => {
     const dayTasks = await Task.find({ day_plan_id: task.day_plan_id._id }).select('completed');
     const allCompleted = dayTasks.every((t) => t.completed);
 
-    // Pick a random celebration message
+    // Pick celebration messages
     const { CELEBRATION_MESSAGES } = require('../constants/celebration-messages');
-    const randomCelebration = CELEBRATION_MESSAGES[Math.floor(Math.random() * CELEBRATION_MESSAGES.length)];
+    const isPremium = subscriptionTier === 'premium';
     
-    const celebrationSummary = allCompleted
-      ? `Tuyệt vời! Bạn đã hoàn thành tất cả các nhiệm vụ hôm nay! Chuỗi ngày (streak): ${newStreak} ngày.`
-      : randomCelebration;
+    // Choose a random coach message
+    const coachMessages = CELEBRATION_MESSAGES.coach;
+    const coachCelebration = coachMessages[Math.floor(Math.random() * coachMessages.length)];
 
-    // Generate a chat message from AI Coach
+    // Generate chat messages
     try {
       const ChatMessage = require('../models/ChatMessage');
       const OnboardingData = require('../models/OnboardingData');
@@ -122,14 +122,48 @@ const completeTask = async (userId, taskId) => {
       const { COACHES } = require('../constants/coaches');
       const coach = onboarding?.niche ? COACHES[onboarding.niche] : COACHES.health;
 
+      // 1. Assistant (Coach) Message - Always sent
       await ChatMessage.create({
         user_id: userId,
         role: 'assistant',
-        content: celebrationSummary,
+        content: coachCelebration,
         sender_name: coach.name,
       });
+
+      // 2. Extra Persona Messages - Only for premium
+      if (isPremium) {
+        // Friend Message
+        const friendMessages = CELEBRATION_MESSAGES.friend;
+        const friendMsg = friendMessages[Math.floor(Math.random() * friendMessages.length)];
+        await ChatMessage.create({
+          user_id: userId,
+          role: 'friend',
+          content: friendMsg,
+          sender_name: 'Best Friend',
+        });
+
+        // Family Message
+        const familyMessages = CELEBRATION_MESSAGES.family;
+        const familyMsg = familyMessages[Math.floor(Math.random() * familyMessages.length)];
+        await ChatMessage.create({
+          user_id: userId,
+          role: 'family',
+          content: familyMsg,
+          sender_name: 'Family',
+        });
+
+        // Girlfriend (Sweetheart) Message
+        const gfMessages = CELEBRATION_MESSAGES.girlfriend;
+        const gfMsg = gfMessages[Math.floor(Math.random() * gfMessages.length)];
+        await ChatMessage.create({
+          user_id: userId,
+          role: 'girlfriend',
+          content: gfMsg,
+          sender_name: 'Sweetheart',
+        });
+      }
     } catch (chatError) {
-      console.error('Failed to create celebration chat message:', chatError);
+      console.error('Failed to create celebration chat messages:', chatError);
     }
 
     return {
@@ -139,7 +173,7 @@ const completeTask = async (userId, taskId) => {
         streakDays: newStreak,
       },
       streakUpdated: newStreak > progress.streak_days - 1,
-      celebrationMessage: celebrationSummary,
+      celebrationMessage: coachCelebration,
     };
   }
 

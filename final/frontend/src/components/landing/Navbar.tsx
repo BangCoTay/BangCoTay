@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { AuthModal } from '@/components/AuthModal';
+import { UserButton } from '@clerk/clerk-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Sparkles, Menu, X } from 'lucide-react';
 import { useState } from 'react';
@@ -10,30 +10,16 @@ import { useAppStore } from '@/store/appStore';
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { currentView, setCurrentView } = useAppStore();
   const { isAuthenticated } = useAuthContext();
-  const { scrollY } = useScroll();
-
-  const navBackground = useTransform(
-    scrollY,
-    [0, 100],
-    ['rgba(255,255,255,0)', 'rgba(255,255,255,0.8)']
-  );
-
-  const navBackgroundDark = useTransform(
-    scrollY,
-    [0, 100],
-    ['rgba(0,0,0,0)', 'rgba(17,24,39,0.8)']
-  );
-
-  const { setCurrentView } = useAppStore();
+  const [_, setSearchParams] = useSearchParams();
 
   const handleStart = () => {
     if (isAuthenticated) {
       setCurrentView('dashboard');
       return;
     }
-    setCurrentView('onboarding');
+    setSearchParams({ auth_mode: 'signup' });
   };
 
   const scrollToSection = (id: string) => {
@@ -89,14 +75,25 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             <ThemeToggle />
 
-            <motion.button
-              onClick={() => handleStart()}
-              className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {isAuthenticated ? 'Go to Dashboard' : 'Start Free'}
-            </motion.button>
+            {isAuthenticated ? (
+              <UserButton 
+                afterSignOutUrl="/" 
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "w-10 h-10 rounded-xl"
+                  }
+                }}
+              />
+            ) : (
+              <motion.button
+                onClick={() => handleStart()}
+                className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Start Free
+              </motion.button>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -124,17 +121,18 @@ export function Navbar() {
                 {link.label}
               </button>
             ))}
-            <button
-              onClick={() => handleStart()}
-              className="w-full py-3 px-4 rounded-xl bg-primary text-primary-foreground font-medium mt-2"
-            >
-              {isAuthenticated ? 'Go to Dashboard' : 'Start Free'}
-            </button>
+            {!isAuthenticated && (
+              <button
+                onClick={() => handleStart()}
+                className="w-full py-3 px-4 rounded-xl bg-primary text-primary-foreground font-medium mt-2"
+              >
+                Start Free
+              </button>
+            )}
           </div>
         </motion.div>
       </motion.header>
 
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </>
   );
 }

@@ -16,37 +16,19 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
-type PlanTask = {
-  id: string;
-  title: string;
-  completed: boolean;
-};
+interface PlanPanelProps {
+  onUpgrade: () => void;
+}
 
-type DayPlan = {
-  dayNumber: number;
-  unlocked?: boolean;
-  tasks?: PlanTask[];
-};
-
-type CurrentPlan = {
-  dayPlans?: DayPlan[];
-};
-
-export function PlanPanel() {
-  const currentPlanQuery = useCurrentPlan() as unknown as {
-    data?: CurrentPlan;
-    isLoading: boolean;
-  };
-  const planData = currentPlanQuery.data;
-  const planLoading = currentPlanQuery.isLoading;
+export function PlanPanel({ onUpgrade }: PlanPanelProps) {
+  const { data: planData, isLoading: planLoading } = useCurrentPlan();
   const { data: progress } = useProgress();
   const { data: onboardingData } = useOnboarding();
   const { data: subscription } = useUserSubscription();
   const completeTask = useCompleteTask();
   const uncompleteTask = useUncompleteTask();
-  const { toast } = useToast();
 
   const [expandedDay, setExpandedDay] = useState<number>(1);
 
@@ -56,7 +38,10 @@ export function PlanPanel() {
   const plan = planData?.dayPlans || [];
   const subscriptionTier = subscription?.tier || "free";
 
-  const handleToggleTask = async (taskId: string, currentCompleted: boolean) => {
+  const handleToggleTask = async (
+    taskId: string,
+    currentCompleted: boolean,
+  ) => {
     try {
       if (!currentCompleted) {
         // Trigger confetti ONLY on completion
@@ -68,15 +53,14 @@ export function PlanPanel() {
         });
 
         await completeTask.mutateAsync(taskId);
+        toast.success("Task completed! 🚀");
       } else {
         await uncompleteTask.mutateAsync(taskId);
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to ${currentCompleted ? "uncomplete" : "complete"} task. Please try again.`,
-        variant: "destructive",
-      });
+      toast.error(
+        `Failed to ${currentCompleted ? "uncomplete" : "complete"} task. Please try again.`,
+      );
     }
   };
 
@@ -226,11 +210,13 @@ export function PlanPanel() {
                       {dayPlan.tasks?.map((task) => (
                         <button
                           key={task.id}
-                          onClick={() => handleToggleTask(task.id, task.completed)}
-                          disabled={completeTask.isPending || uncompleteTask.isPending}
+                          onClick={() =>
+                            handleToggleTask(task.id, task.completed)
+                          }
                           className={cn(
                             "task-card w-full text-left flex items-center justify-between gap-4 transition-all hover:bg-primary/5",
-                            task.completed && "completed bg-success/5 border-success/20",
+                            task.completed &&
+                              "completed bg-success/5 border-success/20",
                           )}
                         >
                           <p
@@ -280,7 +266,9 @@ export function PlanPanel() {
                 Get the full plan + unlimited AI coach
               </p>
             </div>
-            <button className="btn-accent text-sm">Upgrade</button>
+            <button onClick={onUpgrade} className="btn-accent text-sm">
+              Upgrade
+            </button>
           </div>
         </motion.div>
       )}

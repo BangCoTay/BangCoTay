@@ -1,9 +1,21 @@
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 
 export function FinalCTASection() {
   const { setCurrentView } = useAppStore();
+  const { isAuthenticated } = useAuthContext();
+  const [_, setSearchParams] = useSearchParams();
+
+  const handleStart = () => {
+    if (isAuthenticated) {
+      setCurrentView('onboarding');
+      return;
+    }
+    setSearchParams({ auth_mode: 'signup' });
+  };
   return (
     <section className="py-24 px-4 sm:px-6 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
@@ -12,7 +24,7 @@ export function FinalCTASection() {
           You don't need motivation.<br /><span className="text-gradient-primary">You need a system.</span>
         </h2>
         <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">Start your transformation today. Your future self will thank you.</p>
-        <motion.button onClick={() => setCurrentView('onboarding')} className="btn-hero group" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <motion.button onClick={handleStart} className="btn-hero group" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <span className="flex items-center gap-3">Start free. No credit card required.<ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></span>
         </motion.button>
       </motion.div>

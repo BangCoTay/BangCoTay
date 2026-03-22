@@ -4,7 +4,7 @@ import { useAuth } from '@clerk/clerk-react';
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'friend' | 'family' | 'girlfriend';
   content: string;
   createdAt: string;
   model?: string;

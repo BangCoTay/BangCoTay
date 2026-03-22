@@ -21,7 +21,7 @@ router.get('/', auth, async (req, res, next) => {
 // POST /tasks/:taskId/complete
 router.post('/:taskId/complete', auth, async (req, res, next) => {
   try {
-    const result = await tasksService.completeTask(req.user.id, req.params.taskId);
+    const result = await tasksService.completeTask(req.user.id, req.params.taskId, req.user.subscriptionTier);
     res.json({ success: true, data: result });
   } catch (error) {
     next(error);
