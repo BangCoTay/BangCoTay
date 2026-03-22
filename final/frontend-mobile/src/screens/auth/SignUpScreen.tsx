@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useSignUp } from "@clerk/clerk-expo";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -34,32 +35,115 @@ export function SignUpScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = useCallback(async () => {
-    if (!isLoaded) return;
+    console.log("Sign Up button pressed", { email, isLoaded, hasSignUp: !!signUp });
+    if (!isLoaded || !signUp) {
+      Toast.show({
+        type: "info",
+        text1: "Clerk Loading",
+        text2: "Authentication service is still initializing...",
+      });
+      return;
+    }
+
+    if (!email || !password) {
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please provide both an email and a password.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      await signUp.create({ emailAddress: email, password });
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      console.log("1. Creating sign up attempt...");
+      // Check if there is an existing attempt that we shouldn't overwrite if it's already in a good state
+      // but usually for fresh sign up we call create.
+      const attempt = await signUp.create({ emailAddress: email, password });
+      
+      console.log("2. Sign up success, status:", attempt.status);
+
+      console.log("3. Preparing email verification...");
+      // Using the result of create directly to ensure we have the latest version of the attempt
+      await attempt.prepareEmailAddressVerification({ strategy: "email_code" });
+      
+      console.log("4. Verification prepared successfully.");
       setPendingVerification(true);
+      
+      Toast.show({
+        type: "success",
+        text1: "Code Sent",
+        text2: "Verification code sent to your email.",
+      });
     } catch (err: any) {
-      Alert.alert("Error", err.errors?.[0]?.longMessage || "Failed to sign up");
+      console.error("Sign up error:", err);
+      const errorMessage = err.errors?.[0]?.longMessage || err.message || "Failed to sign up";
+      
+      // Specifically handle the "No sign up attempt found" error which is common on Web due to session sync issues
+      const isSessionError = 
+        errorMessage.toLowerCase().includes("no sign up attempt") || 
+        errorMessage.toLowerCase().includes("unable to complete a get request");
+      
+      Toast.show({
+        type: "error",
+        text1: isSessionError ? "Session Error" : "Error",
+        text2: isSessionError ? "Please refresh the page (F5) and try again." : errorMessage,
+      });
     } finally {
       setLoading(false);
     }
   }, [isLoaded, email, password, signUp]);
 
   const handleVerify = useCallback(async () => {
-    if (!isLoaded) return;
+    console.log("Verify button pressed", { code, isLoaded, hasSignUp: !!signUp });
+    if (!isLoaded || !signUp) {
+      Toast.show({
+        type: "info",
+        text1: "Clerk Loading",
+        text2: "Wait a moment...",
+      });
+      return;
+    }
+
+    if (code.length < 6) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Code",
+        text2: "Please enter the 6-digit verification code.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
+      console.log("Attempting verification...");
+      // Using signUp correctly from the hook
       const result = await signUp.attemptEmailAddressVerification({ code });
+      console.log("Verification result status:", result.status);
+      
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
+        Toast.show({
+          type: "success",
+          text1: "Account Verified!",
+          text2: "Successfully signed in. Welcome!",
+        });
+      } else {
+        console.warn("Verification in-progress but not complete:", result.status);
+        Toast.show({
+          type: "info",
+          text1: "Incomplete",
+          text2: `Verification status: ${result.status}`,
+        });
       }
     } catch (err: any) {
-      Alert.alert(
-        "Error",
-        err.errors?.[0]?.longMessage || "Failed to verify email",
-      );
+      console.error("Verification error:", err);
+      const errorMessage = err.errors?.[0]?.longMessage || err.message || "Failed to verify email";
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -71,6 +155,7 @@ export function SignUpScreen() {
         <LinearGradient
           colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
           style={StyleSheet.absoluteFillObject}
+          pointerEvents="none"
         />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -130,7 +215,7 @@ export function SignUpScreen() {
                   <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={handleVerify}
-                    disabled={loading || code.length < 6}
+                    disabled={loading}
                   >
                     <LinearGradient
                       colors={[colors.primary, colors.primaryDark]}
@@ -138,7 +223,7 @@ export function SignUpScreen() {
                       end={{ x: 1, y: 1 }}
                       style={[
                         styles.button,
-                        (loading || code.length < 6) && styles.buttonDisabled,
+                        loading && styles.buttonDisabled,
                       ]}
                     >
                       {loading ? (
@@ -165,6 +250,7 @@ export function SignUpScreen() {
       <LinearGradient
         colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
         style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
       />
 
       <KeyboardAvoidingView
@@ -243,7 +329,7 @@ export function SignUpScreen() {
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={handleSignUp}
-                  disabled={loading || !email || !password}
+                  disabled={loading}
                 >
                   <LinearGradient
                     colors={[colors.primary, colors.primaryDark]}
@@ -275,7 +361,10 @@ export function SignUpScreen() {
             style={styles.footer}
           >
             <Text style={styles.footerText}>Already have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate("SignIn")}>
+            <TouchableOpacity onPress={() => {
+              console.log("Navigating to SignIn");
+              navigation.navigate("SignIn");
+            }}>
               <Text style={styles.linkText}>Sign In</Text>
             </TouchableOpacity>
           </MotiView>

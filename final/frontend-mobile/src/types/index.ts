@@ -36,7 +36,7 @@ export interface DayPlan {
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant' | 'girlfriend' | 'friend' | 'family';
+  role: 'user' | 'assistant' | 'girlfriend' | 'friend' | 'family' | 'coach';
   content: string;
   createdAt: string;
   senderName?: string;

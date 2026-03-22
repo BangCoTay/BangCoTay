@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth, useUser, useClerk } from "@clerk/clerk-expo";
 import apiClient, { setTokenGetter } from "@/lib/api-client";
 
 interface User {
@@ -22,7 +22,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { isLoaded, userId, getToken, signOut: clerkSignOut } = useAuth();
+  const { isLoaded, userId, getToken } = useAuth();
+  const { signOut: clerkSignOut } = useClerk();
   const [dbUser, setDbUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -60,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!userId,
         isLoading,
         user: dbUser,
-        signOut: clerkSignOut,
+        signOut: () => clerkSignOut(),
         refreshUser: syncUser,
       }}
     >

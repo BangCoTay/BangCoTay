@@ -1,83 +1,41 @@
-import { useState, useEffect } from 'react';
-import { Platform } from 'react-native';
-import Purchases, { PurchasesPackage, CustomerInfo } from 'react-native-purchases';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import api from '../lib/api-client';
 
-let isConfigured = false;
+export function useFakePayments() {
+  const [isLoading, setIsLoading] = useState(false);
+  const queryHookQueryClient = useQueryClient();
 
-export function useRevenueCat() {
-  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const configure = async () => {
-      if (!isConfigured) {
-        const apiKey = Platform.OS === 'ios'
-          ? process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS
-          : process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID;
-
-        if (apiKey) {
-          Purchases.configure({ apiKey });
-          isConfigured = true;
-        }
-      }
-
-      try {
-        const offerings = await Purchases.getOfferings();
-        if (offerings.current?.availablePackages) {
-          setPackages(offerings.current.availablePackages);
-        }
-        const info = await Purchases.getCustomerInfo();
-        setCustomerInfo(info);
-      } catch (error) {
-        console.error('RevenueCat error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    configure();
-  }, []);
-
-  const purchasePackage = async (pkg: PurchasesPackage) => {
+  const purchasePlan = async (tier: 'free' | 'starter' | 'premium') => {
+    setIsLoading(true);
     try {
-      const { customerInfo: updatedInfo } = await Purchases.purchasePackage(pkg);
-      setCustomerInfo(updatedInfo);
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const response = await api.post('/users/upgrade-fake', { tier });
+      
       // Invalidate subscription queries to refresh from backend
-      queryClient.invalidateQueries({ queryKey: ['users', 'subscription'] });
-      queryClient.invalidateQueries({ queryKey: ['users', 'profile'] });
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      return updatedInfo;
-    } catch (error: any) {
-      if (!error.userCancelled) {
-        throw error;
-      }
-      return null;
+      queryHookQueryClient.invalidateQueries({ queryKey: ['users', 'subscription'] });
+      queryHookQueryClient.invalidateQueries({ queryKey: ['users', 'profile'] });
+      queryHookQueryClient.invalidateQueries({ queryKey: ['plans'] });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Fake payment error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const restorePurchases = async () => {
-    try {
-      const info = await Purchases.restorePurchases();
-      setCustomerInfo(info);
-      queryClient.invalidateQueries({ queryKey: ['users', 'subscription'] });
-      return info;
-    } catch (error) {
-      throw error;
-    }
+    // For fake payments, restore to free plan
+    return purchasePlan('free');
   };
 
-  const isPro = customerInfo?.entitlements?.active?.['starter'] !== undefined || 
-                  customerInfo?.entitlements?.active?.['premium'] !== undefined;
-
   return {
-    packages,
-    customerInfo,
     isLoading,
-    isPro,
-    purchasePackage,
+    purchasePlan,
     restorePurchases,
   };
 }

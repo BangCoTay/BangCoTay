@@ -7,9 +7,16 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LogOut, ChevronRight, Crown, Settings, CircleDashed } from "lucide-react-native";
+import {
+  LogOut,
+  ChevronRight,
+  Crown,
+  Settings,
+  CircleDashed,
+} from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useUserProfile, useUserSubscription } from "@/hooks/useUsers";
@@ -32,15 +39,16 @@ export function ProfileScreen() {
   const { data: progress } = useProgress();
   const navigation = useNavigation<any>();
 
-  const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: () => signOut(),
-      },
-    ]);
+  const handleSignOut = async () => {
+    console.log("Logout triggered - signing out immediately");
+    try {
+      console.log("Calling signOut context function...");
+      await signOut();
+      console.log("signOut successful");
+    } catch (error) {
+      console.error("Sign out fail:", error);
+      Alert.alert("Error", "Logout failed. Check connection.");
+    }
   };
 
   const tier = subscription?.tier ?? "free";
@@ -50,9 +58,8 @@ export function ProfileScreen() {
   const tierLabel = tierConfig.label;
 
   const isFree = tier === "free";
-  const avatarInitial = (profile?.fullName ||
-    profile?.email ||
-    "U")[0]?.toUpperCase() ?? "U";
+  const avatarInitial =
+    (profile?.fullName || profile?.email || "U")[0]?.toUpperCase() ?? "U";
 
   if (isLoading) {
     return (
@@ -105,12 +112,26 @@ export function ProfileScreen() {
                 />
                 <Text style={styles.avatarText}>{avatarInitial}</Text>
               </View>
-              <Text style={styles.profileName}>{profile?.fullName || "User"}</Text>
+              <Text style={styles.profileName}>
+                {profile?.fullName || "User"}
+              </Text>
               <Text style={styles.profileEmail}>{profile?.email}</Text>
               <View
-                style={[styles.tierBadge, { backgroundColor: tierColor + "15", borderColor: tierColor + "30" }]}
+                style={[
+                  styles.tierBadge,
+                  {
+                    backgroundColor: tierColor + "15",
+                    borderColor: tierColor + "30",
+                  },
+                ]}
               >
-                {tier === 'premium' && <Crown size={12} color={tierColor} style={{ marginRight: 4 }} />}
+                {tier === "premium" && (
+                  <Crown
+                    size={12}
+                    color={tierColor}
+                    style={{ marginRight: 4 }}
+                  />
+                )}
                 <Text style={[styles.tierText, { color: tierColor }]}>
                   {tierLabel}
                 </Text>
@@ -126,7 +147,9 @@ export function ProfileScreen() {
           >
             <BlurView intensity={40} tint="light" style={styles.statsRow}>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{progress?.streakDays ?? 0}</Text>
+                <Text style={styles.statNumber}>
+                  {progress?.streakDays ?? 0}
+                </Text>
                 <Text style={styles.statLabel}>Streak</Text>
               </View>
               <View style={styles.statDivider} />
@@ -155,31 +178,37 @@ export function ProfileScreen() {
           >
             <Text style={styles.sectionTitle}>Subscription</Text>
 
-            {isFree && (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate("Upgrade")}
-                style={styles.upgradeCardContainer}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate("Upgrade")}
+              style={styles.upgradeCardContainer}
+            >
+              <LinearGradient
+                colors={["rgba(168, 85, 247, 0.15)", "rgba(168, 85, 247, 0.05)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.upgradeCard}
               >
-                <LinearGradient
-                  colors={["rgba(168, 85, 247, 0.15)", "rgba(168, 85, 247, 0.05)"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.upgradeCard}
-                >
-                  <View style={styles.upgradeContent}>
-                    <View style={styles.upgradeTitleRow}>
-                      <Crown size={20} color="#A855F7" />
-                      <Text style={styles.upgradeTitle}>Upgrade to Premium Pro</Text>
-                    </View>
-                    <Text style={styles.upgradeDesc}>
-                      Unlock all 30 days, unlimited AI messages & companion
+                <View style={styles.upgradeContent}>
+                  <View style={styles.upgradeTitleRow}>
+                    <Crown size={20} color="#A855F7" />
+                    <Text style={styles.upgradeTitle}>
+                      {tier === "premium"
+                        ? "Manage Subscription"
+                        : tier === "starter"
+                        ? "Upgrade to Premium Pro"
+                        : "Get Premium Pro"}
                     </Text>
                   </View>
-                  <ChevronRight size={24} color="#A855F7" />
-                </LinearGradient>
-              </TouchableOpacity>
-            )}
+                  <Text style={styles.upgradeDesc}>
+                    {tier === "premium"
+                      ? "View or change your current plan"
+                      : "Unlock all 30 days, unlimited AI messages & companion"}
+                  </Text>
+                </View>
+                <ChevronRight size={24} color="#A855F7" />
+              </LinearGradient>
+            </TouchableOpacity>
 
             <BlurView intensity={40} tint="light" style={styles.limitsCard}>
               <View style={styles.limitRow}>
@@ -188,7 +217,11 @@ export function ProfileScreen() {
                   <Text style={styles.limitValue}>
                     {subscription?.features?.daysUnlocked ?? 3} / 30
                   </Text>
-                  <CircleDashed size={16} color={colors.primary} style={{ marginLeft: 8 }} />
+                  <CircleDashed
+                    size={16}
+                    color={colors.primary}
+                    style={{ marginLeft: 8 }}
+                  />
                 </View>
               </View>
               <View style={styles.limitDivider} />
@@ -196,16 +229,40 @@ export function ProfileScreen() {
                 <Text style={styles.limitLabel}>AI Messages left</Text>
                 <View style={styles.limitProgress}>
                   <Text style={styles.limitValue}>
-                    {Math.max(0, (subscription?.features?.aiMessagesTotal ?? 5) - (progress?.aiMessagesUsed ?? 0))}
+                    {Math.max(
+                      0,
+                      (subscription?.features?.aiMessagesTotal ?? 5) -
+                        (progress?.aiMessagesUsed ?? 0),
+                    )}
                   </Text>
                 </View>
               </View>
               <View style={styles.limitDivider} />
               <View style={styles.limitRow}>
                 <Text style={styles.limitLabel}>AI Companion</Text>
-                <View style={[styles.statusBadge, { backgroundColor: subscription?.features?.hasAICompanion ? colors.success + "20" : colors.textTertiary + "20" }]}>
-                  <Text style={[styles.statusText, { color: subscription?.features?.hasAICompanion ? colors.success : colors.textSecondary }]}>
-                    {subscription?.features?.hasAICompanion ? "Active" : "Locked"}
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {
+                      backgroundColor: subscription?.features?.hasAICompanion
+                        ? colors.success + "20"
+                        : colors.textTertiary + "20",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      {
+                        color: subscription?.features?.hasAICompanion
+                          ? colors.success
+                          : colors.textSecondary,
+                      },
+                    ]}
+                  >
+                    {subscription?.features?.hasAICompanion
+                      ? "Active"
+                      : "Locked"}
                   </Text>
                 </View>
               </View>
@@ -219,17 +276,28 @@ export function ProfileScreen() {
             transition={{ delay: 400 }}
             style={styles.section}
           >
-            <TouchableOpacity
-              activeOpacity={0.7}
+            <Pressable
               onPress={handleSignOut}
+              style={({ pressed }) => [
+                {
+                  borderRadius: 24,
+                  overflow: "hidden",
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
             >
-              <BlurView intensity={40} tint="light" style={styles.menuItem}>
+              <View style={styles.menuItem}>
+                <BlurView
+                  intensity={40}
+                  tint="light"
+                  style={StyleSheet.absoluteFillObject}
+                />
                 <LogOut size={22} color={colors.error} />
                 <Text style={[styles.menuItemText, { color: colors.error }]}>
                   Sign Out
                 </Text>
-              </BlurView>
-            </TouchableOpacity>
+              </View>
+            </Pressable>
           </MotiView>
         </ScrollView>
       </SafeAreaView>

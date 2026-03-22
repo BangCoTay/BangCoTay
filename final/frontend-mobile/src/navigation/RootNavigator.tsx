@@ -22,6 +22,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const { isAuthenticated, isLoading, user } = useAuthContext();
+  console.log("RootNavigator Render:", { isAuthenticated, isLoading, hasUser: !!user });
 
   if (isLoading) {
     return (

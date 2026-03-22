@@ -11,7 +11,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { X, CheckCircle2, Sparkles, Rocket } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useRevenueCat } from "@/hooks/usePayments";
+import { useFakePayments } from "../hooks/usePayments";
+import { useUserSubscription } from "@/hooks/useUsers";
 import { colors, spacing, borderRadius, fontSize, typography } from "@/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -32,10 +33,12 @@ const PLANS: PlanDefinition[] = [
     emoji: "⭐",
     fallbackPrice: "$9.99",
     features: [
-      "Full 30-day plan",
-      "30 AI coach messages",
-      "Unlimited quote regenerations",
-      "Priority support",
+      "Full 30-day life plan",
+      "More AI coach messages",
+      "Unlimited quote generation",
+      "Advanced habit tracking",
+      "Smart notifications",
+      "Standard analytics",
     ],
   },
   {
@@ -44,12 +47,12 @@ const PLANS: PlanDefinition[] = [
     emoji: "👑",
     fallbackPrice: "$19.99",
     features: [
-      "Full 30-day plan",
-      "100 AI coach messages",
-      "Unlimited quote regenerations",
+      "Everything in Starter",
+      "Unlimited AI coach messages",
       "AI Companion personas",
-      "Advanced analytics",
-      "Priority support",
+      "Behavior analytics",
+      "Priority 24/7 support",
+      "Early access to new features",
     ],
   },
 ];
@@ -62,32 +65,36 @@ const FeatureRow = React.memo(({ feature }: { feature: string }) => (
 ));
 
 export function UpgradeScreen() {
-  const navigation = useNavigation();
-  const { packages, isLoading, purchasePackage, restorePurchases } =
-    useRevenueCat();
+  const navigation = useNavigation<any>();
+  const {
+    purchasePlan,
+    isLoading: paymentsLoading,
+    restorePurchases,
+  } = useFakePayments();
+  const { data: subscription, isLoading: subLoading } = useUserSubscription();
   const [purchasing, setPurchasing] = useState(false);
+
+  const currentTier = subscription?.tier || "free";
+  const isLoading = paymentsLoading || subLoading;
 
   const handlePurchase = useCallback(
     async (planId: string) => {
-      const pkg = packages.find((p: any) =>
-        p.identifier.toLowerCase().includes(planId),
-      );
-      if (!pkg) {
-        Alert.alert("Error", "Package not available. Please try again later.");
-        return;
-      }
-
       setPurchasing(true);
       try {
-        const result = await purchasePackage(pkg);
-        if (result) {
-          Alert.alert("Success", "Welcome to your upgraded plan!", [
+        await purchasePlan(planId as "starter" | "premium");
+        const isDowngrade = planId === "starter" && currentTier === "premium";
+        Alert.alert(
+          "Success",
+          isDowngrade
+            ? "Switched to Starter plan."
+            : "Welcome to your upgraded plan!",
+          [
             {
               text: "OK",
               onPress: () => navigation.goBack(),
             },
-          ]);
-        }
+          ],
+        );
       } catch (error: any) {
         Alert.alert(
           "Error",
@@ -97,15 +104,20 @@ export function UpgradeScreen() {
         setPurchasing(false);
       }
     },
-    [packages, purchasePackage, navigation],
+    [purchasePlan, navigation],
   );
 
   const handleRestore = useCallback(async () => {
     try {
+      setPurchasing(true);
       await restorePurchases();
-      Alert.alert("Success", "Purchases restored successfully!");
+      Alert.alert("Success", "Restored to Free plan successfully!", [
+        { text: "OK", onPress: () => navigation.goBack() },
+      ]);
     } catch {
-      Alert.alert("Error", "Failed to restore purchases.");
+      Alert.alert("Error", "Failed to restore plan.");
+    } finally {
+      setPurchasing(false);
     }
   }, [restorePurchases]);
 
@@ -160,24 +172,26 @@ export function UpgradeScreen() {
           ) : (
             <View style={styles.plansContainer}>
               {PLANS.map((plan, index) => {
-                const pkg = packages.find((p: any) =>
-                  p.identifier.toLowerCase().includes(plan.id),
-                );
-                const price = pkg?.product?.priceString ?? plan.fallbackPrice;
+                const price = plan.fallbackPrice;
 
                 return (
                   <MotiView
                     key={plan.id}
                     from={{ opacity: 0, translateY: 30 }}
                     animate={{ opacity: 1, translateY: 0 }}
-                    transition={{ type: "timing", duration: 500, delay: 200 + index * 100 }}
+                    transition={{
+                      type: "timing",
+                      duration: 500,
+                      delay: 200 + index * 100,
+                    }}
                   >
-                    <BlurView 
-                      intensity={plan.id === "premium" ? 60 : 40} 
-                      tint="light" 
+                    <BlurView
+                      intensity={plan.id === "premium" ? 60 : 40}
+                      tint="light"
                       style={[
                         styles.planCard,
                         plan.id === "premium" && styles.planCardPremium,
+                        currentTier === plan.id && styles.planCardActive,
                       ]}
                     >
                       {plan.id === "premium" && (
@@ -191,15 +205,31 @@ export function UpgradeScreen() {
                           <Text style={styles.popularText}>BEST VALUE</Text>
                         </View>
                       )}
-                      
+
                       <View style={styles.planHeaderContainer}>
-                        <View style={[styles.planEmojiContainer, plan.id === "premium" && { backgroundColor: "rgba(168, 85, 247, 0.15)" }]}>
+                        <View
+                          style={[
+                            styles.planEmojiContainer,
+                            plan.id === "premium" && {
+                              backgroundColor: "rgba(168, 85, 247, 0.15)",
+                            },
+                          ]}
+                        >
                           <Text style={styles.planEmoji}>{plan.emoji}</Text>
                         </View>
                         <View style={styles.planTitleContainer}>
-                          <Text style={[styles.planName, plan.id === "premium" && { color: "#A855F7" }]}>{plan.name}</Text>
+                          <Text
+                            style={[
+                              styles.planName,
+                              plan.id === "premium" && { color: "#A855F7" },
+                            ]}
+                          >
+                            {plan.name}
+                          </Text>
                           <Text style={styles.planPrice}>{price}</Text>
-                          <Text style={styles.planPriceNote}>one-time payment</Text>
+                          <Text style={styles.planPriceNote}>
+                            one-time payment
+                          </Text>
                         </View>
                       </View>
 
@@ -221,9 +251,11 @@ export function UpgradeScreen() {
                       >
                         <LinearGradient
                           colors={
-                            plan.id === "premium"
-                              ? ["#A855F7", "#8B5CF6"]
-                              : [colors.primaryLight, colors.primary]
+                            currentTier === plan.id
+                              ? ["#CBD5E1", "#94A3B8"]
+                              : plan.id === "premium"
+                                ? ["#A855F7", "#8B5CF6"]
+                                : [colors.primaryLight, colors.primary]
                           }
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 1 }}
@@ -233,7 +265,9 @@ export function UpgradeScreen() {
                             <ActivityIndicator color="#fff" />
                           ) : (
                             <Text style={styles.purchaseButtonText}>
-                              Get {plan.name}
+                              {currentTier === plan.id
+                                ? "Current Plan"
+                                : `Get ${plan.name}`}
                             </Text>
                           )}
                         </LinearGradient>
@@ -266,7 +300,14 @@ export function UpgradeScreen() {
 }
 
 const GradientIcon = ({ size }: { size: number }) => (
-  <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+  <View
+    style={{
+      width: size,
+      height: size,
+      justifyContent: "center",
+      alignItems: "center",
+    }}
+  >
     <LinearGradient
       colors={["#A855F7", colors.primary]}
       style={StyleSheet.absoluteFillObject}
@@ -342,9 +383,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.3)",
     overflow: "hidden",
   },
-  planCardPremium: { 
+  planCardPremium: {
     borderColor: "rgba(168, 85, 247, 0.5)",
     borderWidth: 2,
+  },
+  planCardActive: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+    backgroundColor: "rgba(8, 145, 178, 0.05)",
   },
   popularBadge: {
     position: "absolute",
@@ -413,9 +459,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: spacing.md,
   },
-  featureText: { 
+  featureText: {
     flex: 1,
-    fontSize: fontSize.sm, 
+    fontSize: fontSize.sm,
     fontFamily: typography.fontFamily.medium,
     color: colors.text,
     lineHeight: 20,

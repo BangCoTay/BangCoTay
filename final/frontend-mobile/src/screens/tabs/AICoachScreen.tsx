@@ -24,25 +24,25 @@ import { MotiView } from "moti";
 
 const PERSONA_TABS: Persona[] = ["coach", "friend", "family", "girlfriend"];
 
-const getPersonaColor = (persona: Persona) => {
-  switch (persona) {
+const getPersonaColor = (role: ChatMessage["role"]) => {
+  switch (role) {
     case "friend":
       return colors.friend;
     case "family":
       return colors.family;
     case "girlfriend":
       return colors.girlfriend;
+    case "assistant":
+      return colors.primary;
     default:
       return colors.primary;
   }
 };
 
 const MessageBubble = React.memo(
-  ({ item, activePersona, index }: { item: ChatMessage; activePersona: Persona, index: number }) => {
+  ({ item, index }: { item: ChatMessage; index: number }) => {
     const isUser = item.role === "user";
-    const bubbleColor = isUser
-      ? colors.primary
-      : getPersonaColor(activePersona);
+    const bubbleColor = isUser ? colors.primary : getPersonaColor(item.role);
 
     return (
       <MotiView
@@ -89,14 +89,20 @@ export function AICoachScreen() {
   const [message, setMessage] = useState("");
   const flatListRef = useRef<FlatList>(null);
 
-  const roleFilter = activePersona === "coach" ? undefined : activePersona;
-  const { data: chatData, isLoading: messagesLoading } =
-    useChatMessages(roleFilter);
+  const roleFilter = activePersona;
+  const { data: chatData, isLoading: messagesLoading } = useChatMessages(
+    roleFilter as any,
+  );
   const sendMessage = useSendMessage();
   const { data: subscription } = useUserSubscription();
   const { data: onboarding } = useOnboarding();
 
-  const messages = chatData?.messages ?? [];
+  const allMessages = chatData?.messages ?? [];
+  const messages = allMessages.filter((msg) => {
+    if (activePersona === "coach")
+      return msg.role === "user" || msg.role === "assistant";
+    return msg.role === activePersona;
+  });
   const niche = onboarding?.niche ?? "digital";
   const coach = COACHES[niche as keyof typeof COACHES] ?? COACHES.digital;
 
@@ -111,10 +117,10 @@ export function AICoachScreen() {
   };
 
   const renderMessage = useCallback(
-    ({ item, index }: { item: ChatMessage, index: number }) => (
-      <MessageBubble item={item} activePersona={activePersona} index={index} />
+    ({ item, index }: { item: ChatMessage; index: number }) => (
+      <MessageBubble item={item} index={index} />
     ),
-    [activePersona],
+    [],
   );
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
@@ -167,15 +173,28 @@ export function AICoachScreen() {
                   accessibilityState={{ selected: isActive }}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.tabContent, isActive && { backgroundColor: color + "15" }]}>
-                    <Text style={[styles.tabEmoji, isActive && { transform: [{ scale: 1.1 }] }]}>
+                  <View
+                    style={[
+                      styles.tabContent,
+                      isActive && { backgroundColor: color + "15" },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.tabEmoji,
+                        isActive && { transform: [{ scale: 1.1 }] },
+                      ]}
+                    >
                       {PERSONAS[persona].avatar}
                     </Text>
                     {isActive && (
                       <Text
                         style={[
                           styles.tabLabel,
-                          { color: color, fontFamily: typography.fontFamily.bold },
+                          {
+                            color: color,
+                            fontFamily: typography.fontFamily.bold,
+                          },
                         ]}
                       >
                         {PERSONAS[persona].name}
@@ -240,7 +259,11 @@ export function AICoachScreen() {
 
           {/* Input (only for coach tab) */}
           {isCoachTab && (
-            <BlurView intensity={60} tint="light" style={styles.inputContainerWrapper}>
+            <BlurView
+              intensity={60}
+              tint="light"
+              style={styles.inputContainerWrapper}
+            >
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.input}
@@ -340,9 +363,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   tabEmoji: { fontSize: 20 },
-  tabLabel: { 
-    fontSize: fontSize.xs, 
-    fontFamily: typography.fontFamily.medium 
+  tabLabel: {
+    fontSize: fontSize.xs,
+    fontFamily: typography.fontFamily.medium,
   },
   tabIndicator: {
     position: "absolute",
@@ -389,12 +412,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     paddingHorizontal: spacing.xl,
   },
-  messagesList: { 
-    padding: spacing.xl, 
+  messagesList: {
+    padding: spacing.xl,
     gap: spacing.md,
     paddingBottom: spacing.xxxl,
   },
-  messageBubble: { 
+  messageBubble: {
     maxWidth: "85%",
     shadowColor: colors.textSecondary,
     shadowOffset: { width: 0, height: 2 },
@@ -424,7 +447,7 @@ const styles = StyleSheet.create({
   inputContainerWrapper: {
     borderTopWidth: 1,
     borderTopColor: "rgba(255, 255, 255, 0.5)",
-    paddingBottom: Platform.OS === 'ios' ? spacing.xxl : spacing.md,
+    paddingBottom: Platform.OS === "ios" ? spacing.xxl : spacing.md,
   },
   inputContainer: {
     flexDirection: "row",

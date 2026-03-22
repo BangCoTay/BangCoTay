@@ -24,9 +24,12 @@ apiClient.interceptors.request.use(
   async (config) => {
     if (tokenGetter) {
       const token = await tokenGetter();
+      console.log(`[API] Token retrieved: ${token ? 'Yes (starts with ' + token.substring(0, 10) + '...)' : 'No'}`);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+    } else {
+      console.warn('[API] tokenGetter is not set!');
     }
     return config;
   },

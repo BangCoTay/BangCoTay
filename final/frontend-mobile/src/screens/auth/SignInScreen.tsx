@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useSignIn } from "@clerk/clerk-expo";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -20,7 +21,7 @@ import { colors, spacing, borderRadius, fontSize, typography } from "@/theme";
 import { MotiView } from "moti";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
-import { Mail, Lock, ArrowRight } from "lucide-react-native";
+import { Mail, Lock, ArrowRight, KeyRound } from "lucide-react-native";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "SignIn">;
 
@@ -29,28 +30,231 @@ export function SignInScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [pendingSecondFactor, setPendingSecondFactor] = useState(false);
+  const [secondFactorCode, setSecondFactorCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSignIn = useCallback(async () => {
-    if (!isLoaded) return;
+    console.log("Sign In button pressed", { email, isLoaded });
+    if (!isLoaded) {
+      Toast.show({
+        type: "info",
+        text1: "Clerk Loading",
+        text2: "Authentication service is still initializing...",
+      });
+      return;
+    }
+    
+    if (!email || !password) {
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please fill in both email and password.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
+      console.log("Attempting sign in...");
       const result = await signIn.create({ identifier: email, password });
+      console.log("Sign in result:", result.status);
+      
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
+        Toast.show({
+          type: "success",
+          text1: "Welcome back!",
+          text2: "Successfully signed in.",
+        });
+      } else if (result.status === "needs_second_factor") {
+        console.log("Sign in needs second factor");
+        setPendingSecondFactor(true);
+        Toast.show({
+          type: "info",
+          text1: "2FA Required",
+          text2: "Please enter your verification code.",
+        });
+      } else {
+        console.warn("Sign in status not complete:", result.status);
+        Toast.show({
+          type: "error",
+          text1: "Incomplete",
+          text2: `Sign in status: ${result.status}`,
+        });
       }
     } catch (err: any) {
-      Alert.alert("Error", err.errors?.[0]?.longMessage || "Failed to sign in");
+      console.error("Sign in error:", err);
+      const errorMessage = err.errors?.[0]?.longMessage || "Failed to sign in";
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
   }, [isLoaded, email, password, signIn, setActive]);
+
+  const handleSecondFactor = useCallback(async () => {
+    console.log("2FA button pressed", { secondFactorCode, isLoaded });
+    if (!isLoaded) return;
+
+    if (secondFactorCode.length < 6) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Code",
+        text2: "Please enter the 6-digit code.",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log("Attempting 2FA verification...");
+      const result = await signIn.attemptSecondFactor({
+        strategy: "totp", // Defaulting to totp, clerk will handle if it's different usually
+        code: secondFactorCode,
+      });
+      console.log("2FA result:", result.status);
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        Toast.show({
+          type: "success",
+          text1: "Verified!",
+          text2: "Welcome back.",
+        });
+      } else {
+        console.warn("2FA status not complete:", result.status);
+        Toast.show({
+          type: "error",
+          text1: "Incomplete",
+          text2: `Status: ${result.status}`,
+        });
+      }
+    } catch (err: any) {
+      console.error("2FA error:", err);
+      const errorMessage =
+        err.errors?.[0]?.longMessage || "Failed to verify 2FA code";
+      Toast.show({
+        type: "error",
+        text1: "2FA Error",
+        text2: errorMessage,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [isLoaded, secondFactorCode, signIn, setActive]);
+
+  if (pendingSecondFactor) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <LinearGradient
+          colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
+          style={StyleSheet.absoluteFillObject}
+          pointerEvents="none"
+        />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <MotiView
+              from={{ opacity: 0, translateY: -20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: "timing", duration: 700 }}
+              style={styles.header}
+            >
+              <View style={styles.logoContainer}>
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryLight]}
+                  style={styles.logoIcon}
+                />
+              </View>
+              <Text style={styles.logo}>Two-Factor Auth</Text>
+              <Text style={styles.subtitle}>
+                Enter the code from your authenticator app
+              </Text>
+            </MotiView>
+
+            <MotiView
+              from={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "timing", duration: 600, delay: 200 }}
+            >
+              <BlurView intensity={60} tint="light" style={styles.formCard}>
+                <View style={styles.form}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Verification Code</Text>
+                    <View style={styles.inputContainer}>
+                      <KeyRound
+                        color={colors.primary}
+                        size={20}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="000000"
+                        placeholderTextColor={colors.textTertiary}
+                        value={secondFactorCode}
+                        onChangeText={setSecondFactorCode}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                        autoFocus
+                      />
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={handleSecondFactor}
+                    disabled={loading}
+                  >
+                    <LinearGradient
+                      colors={[colors.primary, colors.primaryDark]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.button, loading && styles.buttonDisabled]}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Text style={styles.buttonText}>Verify & Sign In</Text>
+                          <ArrowRight color="#fff" size={20} />
+                        </>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setPendingSecondFactor(false)}
+                    style={{ marginTop: spacing.md, alignItems: "center" }}
+                  >
+                    <Text style={[styles.footerText, { color: colors.primary }]}>
+                      Back to Sign In
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </BlurView>
+            </MotiView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <LinearGradient
         colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
         style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
       />
 
       <KeyboardAvoidingView
@@ -158,7 +362,10 @@ export function SignInScreen() {
             style={styles.footer}
           >
             <Text style={styles.footerText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
+            <TouchableOpacity onPress={() => {
+              console.log("Navigating to SignUp");
+              navigation.navigate("SignUp");
+            }}>
               <Text style={styles.linkText}>Create one</Text>
             </TouchableOpacity>
           </MotiView>

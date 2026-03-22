@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api-client';
-import { useAuthContext } from '@/contexts/AuthContext';
-import type { ChatMessage } from '@/types';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import apiClient from "@/lib/api-client";
+import { useAuthContext } from "@/contexts/AuthContext";
+import type { ChatMessage, Persona } from "@/types";
 
 export interface SendMessageResponse {
   userMessage: ChatMessage;
@@ -29,19 +29,27 @@ interface RawChatMessage {
   tokens_used?: number;
 }
 
-const VALID_ROLES: ChatMessage['role'][] = ['user', 'assistant', 'friend', 'family', 'girlfriend'];
+const VALID_ROLES: ChatMessage["role"][] = [
+  "user",
+  "assistant",
+  "friend",
+  "family",
+  "girlfriend",
+];
 
 function normalizeChatMessage(raw: unknown): ChatMessage {
   const r = raw as RawChatMessage | undefined;
   const rawRole = r?.role as string | undefined;
-  const role: ChatMessage['role'] = VALID_ROLES.includes(rawRole as ChatMessage['role'])
-    ? (rawRole as ChatMessage['role'])
-    : 'user';
+  const role: ChatMessage["role"] = VALID_ROLES.includes(
+    rawRole as ChatMessage["role"],
+  )
+    ? (rawRole as ChatMessage["role"])
+    : "user";
 
   return {
-    id: r?.id ?? r?._id ?? '',
+    id: r?.id ?? r?._id ?? "",
     role,
-    content: r?.content ?? '',
+    content: r?.content ?? "",
     createdAt: r?.createdAt ?? r?.created_at ?? new Date().toISOString(),
     senderName: r?.senderName ?? r?.sender_name,
     model: r?.model,
@@ -51,20 +59,21 @@ function normalizeChatMessage(raw: unknown): ChatMessage {
 
 function normalizeChatMessagesResponse(raw: unknown): ChatMessagesResponse {
   const r = raw as any;
-  const messagesRaw = Array.isArray(r) ? r : r?.messages ?? [];
+  const messagesRaw = Array.isArray(r) ? r : (r?.messages ?? []);
   return {
     messages: messagesRaw.map(normalizeChatMessage),
-    total: !Array.isArray(r) && typeof r?.total === 'number' ? r.total : 0,
-    hasMore: !Array.isArray(r) && typeof r?.hasMore === 'boolean' ? r.hasMore : false,
+    total: !Array.isArray(r) && typeof r?.total === "number" ? r.total : 0,
+    hasMore:
+      !Array.isArray(r) && typeof r?.hasMore === "boolean" ? r.hasMore : false,
   };
 }
 
 function normalizeSendMessageResponse(raw: unknown): SendMessageResponse {
   const r = raw as any;
   let messagesRemaining: number | null =
-    typeof r?.messagesRemaining === 'number'
+    typeof r?.messagesRemaining === "number"
       ? r.messagesRemaining
-      : typeof r?.messages_remaining === 'number'
+      : typeof r?.messages_remaining === "number"
         ? r.messages_remaining
         : null;
 
@@ -77,16 +86,20 @@ function normalizeSendMessageResponse(raw: unknown): SendMessageResponse {
   };
 }
 
-export function useChatMessages(role?: string, limit = 50, offset = 0) {
+export function useChatMessages(
+  role?: Persona | "user" | "assistant" | "all",
+  limit = 50,
+  offset = 0,
+) {
   const { user, isLoading } = useAuthContext();
   const userId = user?.id;
   const isLoaded = !isLoading;
   return useQuery({
-    queryKey: ['chat', 'messages', role ?? 'all', { limit, offset }],
+    queryKey: ["chat", "messages", role ?? "all", { limit, offset }],
     queryFn: async () => {
-      const roleParam = role ? `&role=${role}` : '';
+      const roleParam = role ? `&role=${role}` : "";
       const response = await apiClient.get(
-        `/chat/messages?limit=${limit}&offset=${offset}${roleParam}`
+        `/chat/messages?limit=${limit}&offset=${offset}${roleParam}`,
       );
       return normalizeChatMessagesResponse(response.data.data);
     },
@@ -99,12 +112,12 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (content: string) => {
-      const response = await apiClient.post('/chat/messages', { content });
+      const response = await apiClient.post("/chat/messages", { content });
       return normalizeSendMessageResponse(response.data.data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat', 'messages'] });
-      queryClient.invalidateQueries({ queryKey: ['progress'] });
+      queryClient.invalidateQueries({ queryKey: ["chat", "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["progress"] });
     },
   });
 }
@@ -113,11 +126,11 @@ export function useClearChat() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const response = await apiClient.delete('/chat/messages');
+      const response = await apiClient.delete("/chat/messages");
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat', 'messages'] });
+      queryClient.invalidateQueries({ queryKey: ["chat", "messages"] });
     },
   });
 }

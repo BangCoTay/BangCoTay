@@ -1,12 +1,10 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { BlurView } from 'expo-blur';
-import { MessageCircle, CalendarDays, Heart, BarChart2, User } from 'lucide-react-native';
+import { MessageCircle, CalendarDays, Heart, User } from 'lucide-react-native';
 import { AICoachScreen } from '@/screens/tabs/AICoachScreen';
 import { PlanScreen } from '@/screens/tabs/PlanScreen';
 import { QuotesScreen } from '@/screens/tabs/QuotesScreen';
-import { AnalyticsScreen } from '@/screens/tabs/AnalyticsScreen';
 import { ProfileScreen } from '@/screens/tabs/ProfileScreen';
 import { colors, typography } from '@/theme';
 
@@ -14,7 +12,6 @@ export type MainTabParamList = {
   AICoach: undefined;
   Plan: undefined;
   Quotes: undefined;
-  Analytics: undefined;
   Profile: undefined;
 };
 
@@ -27,17 +24,19 @@ export function MainTabs() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textTertiary,
-        tabBarBackground: () => (
-          <BlurView tint="light" intensity={80} style={StyleSheet.absoluteFill} />
-        ),
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          position: 'absolute',
-          borderTopWidth: 0,
-          elevation: 0,
-          backgroundColor: 'transparent',
-          height: 60,
-          paddingBottom: 6,
-          paddingTop: 6,
+          borderTopWidth: 1,
+          borderTopColor: colors.borderLight,
+          backgroundColor: colors.backgroundSecondary,
+          height: Platform.OS === 'ios' ? 88 : 66,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+          paddingTop: 12,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -52,8 +51,6 @@ export function MainTabs() {
             return <CalendarDays size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
           } else if (route.name === 'Quotes') {
             return <Heart size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
-          } else if (route.name === 'Analytics') {
-            return <BarChart2 size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
           } else if (route.name === 'Profile') {
             return <User size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
           }
@@ -65,7 +62,6 @@ export function MainTabs() {
       <Tab.Screen name="AICoach" component={AICoachScreen} options={{ tabBarLabel: 'Coach' }} />
       <Tab.Screen name="Plan" component={PlanScreen} options={{ tabBarLabel: 'Plan' }} />
       <Tab.Screen name="Quotes" component={QuotesScreen} options={{ tabBarLabel: 'Quotes' }} />
-      <Tab.Screen name="Analytics" component={AnalyticsScreen} options={{ tabBarLabel: 'Analytics' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Profile' }} />
     </Tab.Navigator>
   );
