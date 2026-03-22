@@ -5,7 +5,6 @@ import type { Niche, Severity, PainPoint } from '@/types';
 
 interface AppState {
   onboardingStep: number;
-  isDarkMode: boolean;
   tempOnboardingData: {
     niche: Niche | null;
     addiction: string | null;
@@ -16,7 +15,6 @@ interface AppState {
   setOnboardingStep: (step: number) => void;
   nextOnboardingStep: () => void;
   prevOnboardingStep: () => void;
-  toggleDarkMode: () => void;
 
   setNiche: (niche: Niche) => void;
   setAddiction: (addiction: string) => void;
@@ -36,15 +34,13 @@ const initialTempOnboardingData = {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       onboardingStep: 0,
-      isDarkMode: false,
       tempOnboardingData: initialTempOnboardingData,
 
       setOnboardingStep: (step) => set({ onboardingStep: step }),
       nextOnboardingStep: () => set((state) => ({ onboardingStep: state.onboardingStep + 1 })),
       prevOnboardingStep: () => set((state) => ({ onboardingStep: Math.max(0, state.onboardingStep - 1) })),
-      toggleDarkMode: () => set({ isDarkMode: !get().isDarkMode }),
 
       setNiche: (niche) =>
         set((state) => ({
@@ -73,14 +69,15 @@ export const useAppStore = create<AppState>()(
       resetApp: () =>
         set({
           onboardingStep: 0,
-          isDarkMode: false,
           tempOnboardingData: initialTempOnboardingData,
         }),
     }),
     {
       name: 'resetify-ui-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ isDarkMode: state.isDarkMode }),
+      partialize: (state) => ({
+        tempOnboardingData: state.tempOnboardingData,
+      }),
     }
   )
 );

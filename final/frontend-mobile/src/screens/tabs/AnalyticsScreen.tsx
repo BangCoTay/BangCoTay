@@ -384,4 +384,19 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: colors.primary,
   },
+  emptyCard: {
+    padding: spacing.xxl,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  emptyText: {
+    fontSize: fontSize.md,
+    fontFamily: typography.fontFamily.medium,
+    color: colors.textTertiary,
+    textAlign: "center",
+  },
 });
