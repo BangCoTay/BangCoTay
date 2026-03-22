@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     syncUser();
   }, [isLoaded, userId]);
 
-  const isLoading = !isLoaded || (!!userId && isSyncing && !dbUser);
+  const isLoading = !isLoaded || isSyncing;
 
   return (
     <AuthContext.Provider

@@ -48,7 +48,7 @@ function normalizeUserSubscription(raw: unknown): UserSubscriptionInfo {
     currentPeriodEnd: r?.currentPeriodEnd ?? r?.current_period_end,
     cancelAtPeriodEnd: r?.cancelAtPeriodEnd ?? r?.cancel_at_period_end ?? false,
     features: {
-      daysUnlocked: limits.daysUnlocked ?? limits.days_unlocked ?? 0,
+      daysUnlocked: limits.daysUnlocked ?? limits.days_unlocked ?? 3,
       aiMessagesTotal: normalize(limits.aiMessagesTotal ?? limits.ai_messages_total),
       aiMessagesPerDay: normalize(limits.aiMessagesPerDay ?? limits.ai_messages_per_day),
       quoteRegenerationsPerDay: normalize(limits.quoteRegenerationsPerDay ?? limits.quote_regenerations_per_day),

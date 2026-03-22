@@ -8,12 +8,15 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { RefreshCw, MessageCircleHeart } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import { useQuotes, useRegenerateQuotes } from "@/hooks/useQuotes";
 import { useUserSubscription } from "@/hooks/useUsers";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "@/theme";
+import { colors, spacing, borderRadius, fontSize, typography } from "@/theme";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import { MotiView } from "moti";
 
 interface Quote {
   id: string;
@@ -21,32 +24,40 @@ interface Quote {
   category: "practical" | "emotional";
 }
 
-const QuoteCard = React.memo(({ quote }: { quote: Quote }) => (
-  <View style={styles.quoteCard}>
-    <Text style={styles.quoteIcon}>{"💬"}</Text>
-    <Text style={styles.quoteText}>{quote.content}</Text>
-    <View style={styles.quoteFooter}>
-      <View
-        style={[
-          styles.categoryBadge,
-          quote.category === "practical"
-            ? styles.practicalBadge
-            : styles.emotionalBadge,
-        ]}
-      >
-        <Text
+const QuoteCard = React.memo(({ quote, index }: { quote: Quote, index: number }) => (
+  <MotiView
+    from={{ opacity: 0, translateY: 30, scale: 0.95 }}
+    animate={{ opacity: 1, translateY: 0, scale: 1 }}
+    transition={{ type: "timing", duration: 500, delay: index * 100 }}
+  >
+    <BlurView intensity={50} tint="light" style={styles.quoteCard}>
+      <View style={styles.quoteIconContainer}>
+        <MessageCircleHeart size={24} color={colors.primary} />
+      </View>
+      <Text style={styles.quoteText}>"{quote.content}"</Text>
+      <View style={styles.quoteFooter}>
+        <View
           style={[
-            styles.categoryText,
+            styles.categoryBadge,
             quote.category === "practical"
-              ? styles.practicalText
-              : styles.emotionalText,
+              ? styles.practicalBadge
+              : styles.emotionalBadge,
           ]}
         >
-          {quote.category === "practical" ? "Practical" : "Emotional"}
-        </Text>
+          <Text
+            style={[
+              styles.categoryText,
+              quote.category === "practical"
+                ? styles.practicalText
+                : styles.emotionalText,
+            ]}
+          >
+            {quote.category === "practical" ? "Practical Action" : "Emotional Support"}
+          </Text>
+        </View>
       </View>
-    </View>
-  </View>
+    </BlurView>
+  </MotiView>
 ));
 
 export function QuotesScreen() {
@@ -75,7 +86,7 @@ export function QuotesScreen() {
   };
 
   const renderQuote = useCallback(
-    ({ item }: { item: Quote }) => <QuoteCard quote={item} />,
+    ({ item, index }: { item: Quote, index: number }) => <QuoteCard quote={item} index={index} />,
     [],
   );
 
@@ -83,62 +94,85 @@ export function QuotesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
+          style={StyleSheet.absoluteFillObject}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Motivation</Text>
-          <Text style={styles.headerSubtitle}>
-            Daily quotes to keep you going
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[
-            styles.refreshButton,
-            regenerateQuotes.isPending && { opacity: 0.5 },
-          ]}
-          onPress={handleRegenerate}
-          disabled={regenerateQuotes.isPending}
-          accessibilityLabel="Refresh quotes"
-          accessibilityRole="button"
-        >
-          {regenerateQuotes.isPending ? (
-            <ActivityIndicator color={colors.primary} size="small" />
-          ) : (
-            <Ionicons name="refresh" size={20} color={colors.primary} />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {remaining !== null && (
-        <View style={styles.remainingBadge}>
-          <Text style={styles.remainingText}>
-            {remaining} regenerations remaining today
-          </Text>
-        </View>
-      )}
-
-      <FlatList
-        data={quotes}
-        renderItem={renderQuote}
-        keyExtractor={keyExtractor}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
+        style={StyleSheet.absoluteFillObject}
       />
-    </SafeAreaView>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <MotiView
+          from={{ opacity: 0, translateY: -20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          style={styles.header}
+        >
+          <View>
+            <Text style={styles.headerTitle}>Motivation</Text>
+            <Text style={styles.headerSubtitle}>
+              Daily quotes to keep you going
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.refreshButton,
+              regenerateQuotes.isPending && { opacity: 0.5 },
+            ]}
+            onPress={handleRegenerate}
+            disabled={regenerateQuotes.isPending}
+            accessibilityLabel="Refresh quotes"
+            accessibilityRole="button"
+            activeOpacity={0.7}
+          >
+            {regenerateQuotes.isPending ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : (
+              <RefreshCw size={24} color={colors.primary} />
+            )}
+          </TouchableOpacity>
+        </MotiView>
+
+        {remaining !== null && (
+          <MotiView
+            from={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 200 }}
+            style={styles.remainingBadgeContainer}
+          >
+            <View style={styles.remainingBadge}>
+              <Text style={styles.remainingText}>
+                {remaining} regenerations remaining today
+              </Text>
+            </View>
+          </MotiView>
+        )}
+
+        <FlatList
+          data={quotes}
+          renderItem={renderQuote}
+          keyExtractor={keyExtractor}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  safeArea: { flex: 1 },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -148,72 +182,104 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
   },
   headerTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
+    fontSize: 32,
+    fontFamily: typography.fontFamily.bold,
     color: colors.text,
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.md,
+    fontFamily: typography.fontFamily.medium,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: spacing.xs,
   },
   refreshButton: {
     width: 48,
     height: 48,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.primary + "15",
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.8)",
+  },
+  remainingBadgeContainer: {
+    alignItems: "center",
+    marginVertical: spacing.md,
   },
   remainingBadge: {
-    margin: spacing.lg,
-    padding: spacing.sm,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.surfaceSecondary,
-    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.8)",
   },
   remainingText: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
+    fontFamily: typography.fontFamily.medium,
     color: colors.textSecondary,
   },
   scrollContent: {
     padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
     gap: spacing.lg,
     paddingBottom: 100,
   },
   quoteCard: {
     padding: spacing.xxl,
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.surface,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.md,
-    marginBottom: spacing.lg,
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    shadowColor: colors.textSecondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  quoteIcon: { fontSize: 24 },
+  quoteIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: spacing.md,
+  },
   quoteText: {
     fontSize: fontSize.lg,
     color: colors.text,
-    fontWeight: fontWeight.medium,
+    fontFamily: typography.fontFamily.medium,
     lineHeight: 28,
-    fontStyle: "italic",
   },
-  quoteFooter: { flexDirection: "row", justifyContent: "flex-end" },
+  quoteFooter: { 
+    flexDirection: "row", 
+    justifyContent: "flex-end",
+    marginTop: spacing.lg, 
+  },
   categoryBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 6,
     borderRadius: borderRadius.full,
+    borderWidth: 1,
   },
-  emotionalBadge: { backgroundColor: "#FEE2E2" },
-  practicalBadge: { backgroundColor: "#DBEAFE" },
+  emotionalBadge: { 
+    backgroundColor: "rgba(220, 38, 38, 0.1)",
+    borderColor: "rgba(220, 38, 38, 0.2)"
+  },
+  practicalBadge: { 
+    backgroundColor: "rgba(37, 99, 235, 0.1)",
+    borderColor: "rgba(37, 99, 235, 0.2)"
+  },
   categoryText: {
     fontSize: fontSize.xs,
-    fontWeight: fontWeight.medium,
+    fontFamily: typography.fontFamily.bold,
   },
   emotionalText: { color: "#DC2626" },
   practicalText: { color: "#2563EB" },

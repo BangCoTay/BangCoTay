@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,6 +8,10 @@ import Toast from "react-native-toast-message";
 import * as SecureStore from "expo-secure-store";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RootNavigator } from "@/navigation/RootNavigator";
+import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync();
 
 const tokenCache = {
   async getToken(key: string) {
@@ -39,6 +43,23 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ClerkProvider

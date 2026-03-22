@@ -3,23 +3,24 @@ import { Dimensions } from "react-native";
 const { width, height } = Dimensions.get("window");
 
 export const colors = {
-  primary: "#0D9488",
-  primaryLight: "#14B8A6",
-  primaryDark: "#0F766E",
-  accent: "#E8613A",
-  accentLight: "#F97316",
+  primary: "#0891B2",
+  primaryLight: "#22D3EE",
+  primaryDark: "#0E7490",
+  primaryDarkHex: "#0E7490",
+  accent: "#22C55E",
+  accentLight: "#4ADE80",
 
-  background: "#FFFFFF",
-  backgroundSecondary: "#F8FAFC",
+  background: "#ECFEFF",
+  backgroundSecondary: "#FFFFFF",
   surface: "#FFFFFF",
-  surfaceSecondary: "#F1F5F9",
+  surfaceSecondary: "#F8FAFC",
 
-  text: "#0F172A",
-  textSecondary: "#64748B",
+  text: "#164E63",
+  textSecondary: "#475569",
   textTertiary: "#94A3B8",
 
-  border: "#E2E8F0",
-  borderLight: "#F1F5F9",
+  border: "#CFFAFE",
+  borderLight: "#E0F2FE",
 
   success: "#22C55E",
   error: "#EF4444",
@@ -27,22 +28,22 @@ export const colors = {
 
   // Dark mode
   dark: {
-    background: "#0F172A",
-    backgroundSecondary: "#1E293B",
-    surface: "#1E293B",
-    surfaceSecondary: "#334155",
-    text: "#F8FAFC",
-    textSecondary: "#94A3B8",
-    textTertiary: "#64748B",
-    border: "#334155",
-    borderLight: "#1E293B",
+    background: "#083344", // Cyan-950 equivalent
+    backgroundSecondary: "#164E63", // Cyan-900
+    surface: "#164E63",
+    surfaceSecondary: "#0E7490", // Cyan-800
+    text: "#ECFEFF",
+    textSecondary: "#A5F3FC",
+    textTertiary: "#67E8F9",
+    border: "#164E63",
+    borderLight: "#083344",
   },
 
   // Persona colors
   friend: "#3B82F6",
   family: "#22C55E",
   girlfriend: "#EC4899",
-  coach: "#0D9488",
+  coach: "#0891B2",
 };
 
 export const spacing = {
@@ -61,6 +62,15 @@ export const borderRadius = {
   lg: 16,
   xl: 20,
   full: 999,
+};
+
+export const typography = {
+  fontFamily: {
+    regular: "Inter_400Regular",
+    medium: "Inter_500Medium",
+    semibold: "Inter_600SemiBold",
+    bold: "Inter_700Bold",
+  },
 };
 
 export const fontSize = {

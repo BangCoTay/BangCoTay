@@ -1,12 +1,14 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { MessageCircle, CalendarDays, Heart, BarChart2, User } from 'lucide-react-native';
 import { AICoachScreen } from '@/screens/tabs/AICoachScreen';
 import { PlanScreen } from '@/screens/tabs/PlanScreen';
 import { QuotesScreen } from '@/screens/tabs/QuotesScreen';
 import { AnalyticsScreen } from '@/screens/tabs/AnalyticsScreen';
 import { ProfileScreen } from '@/screens/tabs/ProfileScreen';
-import { colors } from '@/theme';
+import { colors, typography } from '@/theme';
 
 export type MainTabParamList = {
   AICoach: undefined;
@@ -25,33 +27,38 @@ export function MainTabs() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textTertiary,
+        tabBarBackground: () => (
+          <BlurView tint="light" intensity={80} style={StyleSheet.absoluteFill} />
+        ),
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          paddingBottom: 4,
-          paddingTop: 4,
+          position: 'absolute',
+          borderTopWidth: 0,
+          elevation: 0,
+          backgroundColor: 'transparent',
           height: 60,
+          paddingBottom: 6,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontFamily: typography.fontFamily.semibold,
         },
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = 'chatbubble';
+          size = 22; // Slightly smaller size for Lucide icons looks better
 
           if (route.name === 'AICoach') {
-            iconName = focused ? 'chatbubble' : 'chatbubble-outline';
+            return <MessageCircle size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
           } else if (route.name === 'Plan') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
+            return <CalendarDays size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
           } else if (route.name === 'Quotes') {
-            iconName = focused ? 'heart' : 'heart-outline';
+            return <Heart size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
           } else if (route.name === 'Analytics') {
-            iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+            return <BarChart2 size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
           } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
+            return <User size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return null;
         },
       })}
     >

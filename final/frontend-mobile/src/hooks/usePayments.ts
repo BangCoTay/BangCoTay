@@ -69,7 +69,8 @@ export function useRevenueCat() {
     }
   };
 
-  const isPro = customerInfo?.entitlements?.active?.['pro'] !== undefined;
+  const isPro = customerInfo?.entitlements?.active?.['starter'] !== undefined || 
+                  customerInfo?.entitlements?.active?.['premium'] !== undefined;
 
   return {
     packages,

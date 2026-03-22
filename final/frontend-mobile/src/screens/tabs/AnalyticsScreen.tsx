@@ -8,7 +8,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProgress, useAnalytics } from "@/hooks/useProgress";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "@/theme";
+import { colors, spacing, borderRadius, fontSize, typography } from "@/theme";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import { MotiView } from "moti";
+import { Flame, CheckCircle, BarChart2, MessageCircle } from "lucide-react-native";
 
 interface WeekProgress {
   week: number;
@@ -23,30 +27,62 @@ const ANALYTICS_DAYS = 30;
 
 const StatCard = React.memo(
   ({
-    emoji,
+    icon: Icon,
     value,
     label,
+    delay,
+    iconColor,
   }: {
-    emoji: string;
+    icon: any;
     value: string;
     label: string;
+    delay: number;
+    iconColor: string;
   }) => (
-    <View style={styles.statCard} accessibilityLabel={`${label}: ${value}`}>
-      <Text style={styles.statEmoji}>{emoji}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    <MotiView
+      from={{ opacity: 0, translateY: 20 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: "timing", duration: 500, delay }}
+      style={{ width: "48%", marginBottom: spacing.md }}
+    >
+      <BlurView intensity={40} tint="light" style={styles.statCard}>
+        <View style={[styles.iconContainer, { backgroundColor: iconColor + "20" }]}>
+          <Icon color={iconColor} size={24} />
+        </View>
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statLabel}>{label}</Text>
+      </BlurView>
+    </MotiView>
   ),
 );
 
-const WeekRow = React.memo(({ week }: { week: WeekProgress }) => (
-  <View style={styles.weekRow}>
-    <Text style={styles.weekLabel}>Week {week.week}</Text>
-    <View style={styles.weekBarContainer}>
-      <View style={[styles.weekBar, { width: `${week.percentage}%` }]} />
-    </View>
-    <Text style={styles.weekPercent}>{Math.round(week.percentage)}%</Text>
-  </View>
+const WeekRow = React.memo(({ week, index }: { week: WeekProgress, index: number }) => (
+  <MotiView
+    from={{ opacity: 0, translateX: -20 }}
+    animate={{ opacity: 1, translateX: 0 }}
+    transition={{ type: "timing", duration: 400, delay: 300 + index * 100 }}
+    style={styles.weekRowContainer}
+  >
+    <BlurView intensity={40} tint="light" style={styles.weekRow}>
+      <Text style={styles.weekLabel}>Week {week.week}</Text>
+      <View style={styles.weekBarContainer}>
+        <MotiView
+          from={{ width: "0%" }}
+          animate={{ width: `${week.percentage}%` }}
+          transition={{ type: "timing", duration: 1000, delay: 500 + index * 100 }}
+          style={styles.weekBarWrapper}
+        >
+          <LinearGradient
+            colors={[colors.primaryLight, colors.primary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </MotiView>
+      </View>
+      <Text style={styles.weekPercent}>{Math.round(week.percentage)}%</Text>
+    </BlurView>
+  </MotiView>
 ));
 
 export function AnalyticsScreen() {
@@ -66,64 +102,82 @@ export function AnalyticsScreen() {
         {/* Stats Cards */}
         <View style={styles.statsGrid}>
           <StatCard
-            emoji="🔥"
+            icon={Flame}
+            iconColor="#F97316"
             value={String(progress?.streakDays ?? 0)}
             label="Day Streak"
+            delay={100}
           />
           <StatCard
-            emoji="✅"
+            icon={CheckCircle}
+            iconColor={colors.success}
             value={String(progress?.totalTasksCompleted ?? 0)}
             label="Tasks Done"
+            delay={200}
           />
           <StatCard
-            emoji="📊"
+            icon={BarChart2}
+            iconColor={colors.primary}
             value={`${Math.round(progress?.completionRate ?? 0)}%`}
             label="Completion"
+            delay={300}
           />
           <StatCard
-            emoji="💬"
+            icon={MessageCircle}
+            iconColor="#8B5CF6"
             value={String(progress?.aiMessagesUsed ?? 0)}
             label="AI Chats"
+            delay={400}
           />
         </View>
 
         {/* Weekly Progress */}
         {weeklyProgress.length > 0 && (
-          <View style={styles.section}>
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 500 }}
+            style={styles.section}
+          >
             <Text style={styles.sectionTitle}>Weekly Progress</Text>
-            {weeklyProgress.map((week) => (
-              <WeekRow key={week.week} week={week} />
+            {weeklyProgress.map((week, index) => (
+              <WeekRow key={week.week} week={week} index={index} />
             ))}
-          </View>
+          </MotiView>
         )}
 
         {/* Streak History */}
         {recentStreak.length > 0 && (
-          <View style={styles.section}>
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 700 }}
+            style={styles.section}
+          >
             <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <View style={styles.streakGrid}>
-              {recentStreak.map((day, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.streakDot,
-                    day.tasksCompleted > 0
-                      ? styles.streakDotActive
-                      : styles.streakDotInactive,
-                  ]}
-                  accessibilityLabel={
-                    day.tasksCompleted > 0
-                      ? `Day active, ${day.tasksCompleted} tasks`
-                      : "Day inactive"
-                  }
-                >
-                  <Text style={styles.streakDotText}>
-                    {day.tasksCompleted > 0 ? "✓" : "·"}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
+            <BlurView intensity={40} tint="light" style={styles.streakCard}>
+              <View style={styles.streakGrid}>
+                {recentStreak.map((day, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.streakDot,
+                      day.tasksCompleted > 0
+                        ? styles.streakDotActive
+                        : styles.streakDotInactive,
+                    ]}
+                    accessibilityLabel={
+                      day.tasksCompleted > 0
+                        ? `Day active, ${day.tasksCompleted} tasks`
+                        : "Day inactive"
+                    }
+                  >
+                    {day.tasksCompleted > 0 && <View style={styles.streakDotInner} />}
+                  </View>
+                ))}
+              </View>
+            </BlurView>
+          </MotiView>
         )}
       </View>
     );
@@ -131,132 +185,190 @@ export function AnalyticsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
+          style={StyleSheet.absoluteFillObject}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Analytics</Text>
-        <Text style={styles.headerSubtitle}>Track your transformation</Text>
-      </View>
-
-      <FlatList
-        data={[1]}
-        renderItem={renderSection}
-        keyExtractor={() => "analytics-content"}
-        showsVerticalScrollIndicator={false}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
+        style={StyleSheet.absoluteFillObject}
       />
-    </SafeAreaView>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <MotiView
+          from={{ opacity: 0, translateY: -20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          style={styles.header}
+        >
+          <Text style={styles.headerTitle}>Analytics</Text>
+          <Text style={styles.headerSubtitle}>Track your transformation</Text>
+        </MotiView>
+
+        <FlatList
+          data={[1]}
+          renderItem={renderSection}
+          keyExtractor={() => "analytics-content"}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1 }}
+        />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  safeArea: { flex: 1 },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
   header: {
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
   },
   headerTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
+    fontSize: 32,
+    fontFamily: typography.fontFamily.bold,
     color: colors.text,
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.md,
+    fontFamily: typography.fontFamily.medium,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: spacing.xs,
   },
   scrollContent: {
-    padding: spacing.lg,
-    gap: spacing.xxl,
-    paddingBottom: 100,
+    padding: spacing.xl,
   },
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.md,
+    justifyContent: "space-between",
   },
   statCard: {
-    flex: 1,
-    minWidth: "45%",
     padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.surface,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     alignItems: "center",
-    gap: spacing.xs,
+    gap: spacing.sm,
+    shadowColor: colors.textSecondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  statEmoji: { fontSize: 24 },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: spacing.xs,
+  },
   statValue: {
-    fontSize: fontSize.xxl,
-    fontWeight: fontWeight.bold,
+    fontSize: 28,
+    fontFamily: typography.fontFamily.bold,
     color: colors.text,
   },
-  statLabel: { fontSize: fontSize.xs, color: colors.textSecondary },
-  section: { gap: spacing.md },
+  statLabel: { 
+    fontSize: fontSize.sm, 
+    fontFamily: typography.fontFamily.medium,
+    color: colors.textSecondary 
+  },
+  section: { 
+    gap: spacing.md, 
+    marginTop: spacing.xl 
+  },
   sectionTitle: {
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
+    fontFamily: typography.fontFamily.bold,
     color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  weekRowContainer: {
+    marginBottom: spacing.sm,
   },
   weekRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   weekLabel: {
     fontSize: fontSize.sm,
+    fontFamily: typography.fontFamily.semibold,
     color: colors.textSecondary,
     width: 60,
   },
   weekBarContainer: {
     flex: 1,
-    height: 8,
-    backgroundColor: colors.surfaceSecondary,
+    height: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
     borderRadius: borderRadius.full,
     overflow: "hidden",
   },
-  weekBar: {
+  weekBarWrapper: {
     height: "100%",
-    backgroundColor: colors.primary,
     borderRadius: borderRadius.full,
+    overflow: "hidden",
   },
   weekPercent: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
+    fontFamily: typography.fontFamily.bold,
     color: colors.textSecondary,
-    width: 35,
+    width: 40,
     textAlign: "right",
+  },
+  streakCard: {
+    padding: spacing.xl,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
   },
   streakGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
+    justifyContent: "center",
   },
   streakDot: {
     width: 32,
     height: 32,
-    borderRadius: borderRadius.sm,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
-  streakDotActive: { backgroundColor: colors.primary + "20" },
-  streakDotInactive: { backgroundColor: colors.surfaceSecondary },
-  streakDotText: {
-    fontSize: fontSize.sm,
-    color: colors.primary,
-    fontWeight: fontWeight.semibold,
+  streakDotActive: { 
+    backgroundColor: colors.primary + "30",
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  streakDotInactive: { 
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+  },
+  streakDotInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.primary,
   },
 });

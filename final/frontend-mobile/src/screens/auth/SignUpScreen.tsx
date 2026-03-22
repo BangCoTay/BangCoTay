@@ -16,7 +16,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootNavigator";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "@/theme";
+import { colors, spacing, borderRadius, fontSize, typography } from "@/theme";
+import { MotiView } from "moti";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import { Mail, Lock, ArrowRight, KeyRound } from "lucide-react-native";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "SignUp">;
 
@@ -63,7 +67,11 @@ export function SignUpScreen() {
 
   if (pendingVerification) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <LinearGradient
+          colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
+          style={StyleSheet.absoluteFillObject}
+        />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
@@ -71,38 +79,72 @@ export function SignUpScreen() {
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <View style={styles.header}>
-              <Text style={styles.logo}>Resetify</Text>
-              <Text style={styles.subtitle}>Verify your email</Text>
-              <Text style={styles.description}>We sent a code to {email}</Text>
-            </View>
-
-            <View style={styles.form}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Verification Code</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter code"
-                  placeholderTextColor={colors.textTertiary}
-                  value={code}
-                  onChangeText={setCode}
-                  keyboardType="number-pad"
+            <MotiView
+              from={{ opacity: 0, translateY: -20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: "timing", duration: 700 }}
+              style={styles.header}
+            >
+              <View style={styles.logoContainer}>
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryLight]}
+                  style={styles.logoIcon}
                 />
               </View>
+              <Text style={styles.logo}>Check your email</Text>
+              <Text style={styles.subtitle}>We sent a verification code to</Text>
+              <Text style={styles.emailText}>{email}</Text>
+            </MotiView>
 
-              <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
-                onPress={handleVerify}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Verify Email</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <MotiView
+              from={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "timing", duration: 600, delay: 200 }}
+            >
+              <BlurView intensity={60} tint="light" style={styles.formCard}>
+                <View style={styles.form}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Verification Code</Text>
+                    <View style={styles.inputContainer}>
+                      <KeyRound color={colors.primary} size={20} style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Enter 6-digit code"
+                        placeholderTextColor={colors.textTertiary}
+                        value={code}
+                        onChangeText={setCode}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                      />
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={handleVerify}
+                    disabled={loading || code.length < 6}
+                  >
+                    <LinearGradient
+                      colors={[colors.primary, colors.primaryDark]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.button, (loading || code.length < 6) && styles.buttonDisabled]}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Text style={styles.buttonText}>Verify Account</Text>
+                          <ArrowRight color="#fff" size={20} />
+                        </>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </BlurView>
+            </MotiView>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -110,7 +152,12 @@ export function SignUpScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <LinearGradient
+        colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
+        style={StyleSheet.absoluteFillObject}
+      />
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -118,59 +165,100 @@ export function SignUpScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
+          <MotiView
+            from={{ opacity: 0, translateY: -20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", duration: 700 }}
+            style={styles.header}
+          >
+            <View style={styles.logoContainer}>
+              <LinearGradient
+                colors={[colors.primary, colors.primaryLight]}
+                style={styles.logoIcon}
+              />
+            </View>
             <Text style={styles.logo}>Resetify</Text>
-            <Text style={styles.subtitle}>Create your account</Text>
-          </View>
+            <Text style={styles.subtitle}>Start your transformation</Text>
+          </MotiView>
 
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor={colors.textTertiary}
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-              />
-            </View>
+          <MotiView
+            from={{ opacity: 0, translateY: 40 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", duration: 800, delay: 200 }}
+          >
+            <BlurView intensity={60} tint="light" style={styles.formCard}>
+              <View style={styles.form}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Email Address</Text>
+                  <View style={styles.inputContainer}>
+                    <Mail color={colors.primary} size={20} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your email"
+                      placeholderTextColor={colors.textTertiary}
+                      value={email}
+                      onChangeText={setEmail}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      autoComplete="email"
+                    />
+                  </View>
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Create a password"
-                placeholderTextColor={colors.textTertiary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoComplete="new-password"
-              />
-            </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Password</Text>
+                  <View style={styles.inputContainer}>
+                    <Lock color={colors.primary} size={20} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Create a secure password"
+                      placeholderTextColor={colors.textTertiary}
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry
+                      autoComplete="new-password"
+                    />
+                  </View>
+                </View>
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleSignUp}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Sign Up</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={handleSignUp}
+                  disabled={loading || !email || !password}
+                >
+                  <LinearGradient
+                    colors={[colors.primary, colors.primaryDark]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.button, (loading || !email || !password) && styles.buttonDisabled]}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <>
+                        <Text style={styles.buttonText}>Create Account</Text>
+                        <ArrowRight color="#fff" size={20} />
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </BlurView>
+          </MotiView>
 
-          <View style={styles.footer}>
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ type: "timing", duration: 600, delay: 600 }}
+            style={styles.footer}
+          >
             <Text style={styles.footerText}>Already have an account?</Text>
             <TouchableOpacity onPress={() => navigation.navigate("SignIn")}>
               <Text style={styles.linkText}>Sign In</Text>
             </TouchableOpacity>
-          </View>
+          </MotiView>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -188,76 +276,130 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
-    padding: spacing.xxl,
+    padding: spacing.xl,
   },
   header: {
     alignItems: "center",
     marginBottom: spacing.xxxl,
+    marginTop: spacing.xl,
+  },
+  logoContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    overflow: "hidden",
+    marginBottom: spacing.md,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  logoIcon: {
+    flex: 1,
   },
   logo: {
     fontSize: fontSize.hero,
-    fontWeight: fontWeight.extrabold,
-    color: colors.primary,
-    marginBottom: spacing.sm,
+    fontFamily: typography.fontFamily.bold,
+    color: colors.text,
+    marginBottom: spacing.xs,
+    letterSpacing: -1,
   },
   subtitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
+    fontFamily: typography.fontFamily.medium,
     color: colors.textSecondary,
   },
-  description: {
-    fontSize: fontSize.sm,
-    color: colors.textTertiary,
+  emailText: {
+    fontSize: fontSize.md,
+    fontFamily: typography.fontFamily.bold,
+    color: colors.primary,
     marginTop: spacing.xs,
   },
-  form: {
-    gap: spacing.lg,
+  formCard: {
+    borderRadius: 24,
+    padding: spacing.xl,
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.8)",
+    shadowColor: colors.textSecondary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 5,
+    overflow: "hidden",
   },
-  inputContainer: {
-    gap: spacing.xs,
+  form: {
+    gap: spacing.xl,
+  },
+  inputGroup: {
+    gap: spacing.sm,
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
+    fontFamily: typography.fontFamily.semibold,
     color: colors.text,
+    marginLeft: spacing.xs,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.5)",
+    borderRadius: borderRadius.lg,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    height: 56,
+  },
+  inputIcon: {
+    marginLeft: spacing.lg,
+    marginRight: spacing.sm,
   },
   input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
+    flex: 1,
+    height: "100%",
     fontSize: fontSize.md,
+    fontFamily: typography.fontFamily.regular,
     color: colors.text,
-    backgroundColor: colors.surfaceSecondary,
+    paddingRight: spacing.lg,
   },
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+    height: 56,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
     marginTop: spacing.sm,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    gap: spacing.sm,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
     color: "#FFFFFF",
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
+    fontSize: fontSize.lg,
+    fontFamily: typography.fontFamily.semibold,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: spacing.xxl,
+    marginTop: spacing.xxxl,
+    marginBottom: spacing.xl,
     gap: spacing.xs,
   },
   footerText: {
     color: colors.textSecondary,
-    fontSize: fontSize.sm,
+    fontSize: fontSize.md,
+    fontFamily: typography.fontFamily.medium,
   },
   linkText: {
     color: colors.primary,
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
+    fontSize: fontSize.md,
+    fontFamily: typography.fontFamily.bold,
   },
 });
