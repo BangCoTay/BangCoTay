@@ -9,7 +9,6 @@ const createOnboarding = async (userId, dto) => {
     existing.addiction = dto.addiction;
     existing.severity = dto.severity;
     existing.pain_points = dto.painPoints;
-    existing.healthy_habit = dto.healthyHabit;
     existing.completed_at = new Date();
     await existing.save();
 
@@ -24,7 +23,6 @@ const createOnboarding = async (userId, dto) => {
     addiction: dto.addiction,
     severity: dto.severity,
     pain_points: dto.painPoints,
-    healthy_habit: dto.healthyHabit,
   });
 
   await User.findByIdAndUpdate(userId, { onboarding_completed: true });

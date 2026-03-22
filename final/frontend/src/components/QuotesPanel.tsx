@@ -97,18 +97,6 @@ export function QuotesPanel({ onUpgrade }: QuotesPanelProps) {
 
       {/* Regenerate button */}
       <div className="p-4 border-t">
-        {regenerationsRemaining !== null && (
-          <div className="mb-2 text-center">
-            <span className="text-xs text-muted-foreground">
-              {regenerationsRemaining > 0 ? (
-                `${regenerationsRemaining} regeneration${regenerationsRemaining > 1 ? 's' : ''} left today`
-              ) : (
-                <span className="text-accent">Upgrade for unlimited quotes</span>
-              )}
-            </span>
-          </div>
-        )}
-
         <button
           onClick={handleAction}
           disabled={regenerateMutation.isPending}

@@ -62,12 +62,12 @@ export function Dashboard() {
 
               <ThemeToggle />
 
-              <UserButton 
-                afterSignOutUrl="/" 
+              <UserButton
+                afterSignOutUrl="/"
                 appearance={{
                   elements: {
-                    userButtonAvatarBox: "w-10 h-10 rounded-xl"
-                  }
+                    userButtonAvatarBox: "w-10 h-10 rounded-xl",
+                  },
                 }}
               />
             </div>
@@ -97,7 +97,7 @@ export function Dashboard() {
           >
             <PlanPanel onUpgrade={() => setIsUpgradeModalOpen(true)} />
           </motion.div>
- 
+
           {/* Right panel - Quotes */}
           <motion.div
             className="h-full"

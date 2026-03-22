@@ -27,11 +27,6 @@ const onboardingDataSchema = new mongoose.Schema(
       enum: ['time', 'energy', 'confidence', 'sleep', 'relationships', 'money'],
       default: [],
     },
-    healthy_habit: {
-      type: String,
-      enum: ['reading', 'workout', 'meditation', 'learning', 'journaling', 'sleep', 'none'],
-      required: true,
-    },
     completed_at: {
       type: Date,
       default: null,

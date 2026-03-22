@@ -45,7 +45,7 @@ const generateCoachResponse = async (messages, coachPersona, userContext, subscr
     throw new Error('OpenAI not configured');
   }
 
-  const model = 'gpt-5-nano';
+  const model = 'gpt-4o-mini';
   const systemPrompt = buildSystemPrompt(coachPersona, userContext);
 
   const completion = await openai.chat.completions.create({

@@ -7,12 +7,21 @@ interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const createCheckout = useCreateCheckout();
 
+  const STRIPE_PRICE_IDS = {
+    starter: "price_1TCDROEImQN0mO8Hd5v88l0I",
+    premium: "price_1TCDV4EImQN0mO8HEAErXGS6",
+  };
+
+  const getPriceId = (tier: "starter" | "premium") => STRIPE_PRICE_IDS[tier];
+
   const handleUpgrade = (tier: "starter" | "premium") => {
-    createCheckout.mutate({ tier, priceId: `price_${tier}` });
+    const priceId = getPriceId(tier);
+    if (priceId) {
+      createCheckout.mutate({ tier, priceId });
+    }
   };
 
   const plans = [

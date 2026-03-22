@@ -37,6 +37,28 @@ const Index = () => {
     }
   }, [searchParams, isAuthenticated]);
 
+  useEffect(() => {
+    // Handle payment status from URL params
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      import('sonner').then(({ toast }) => {
+        toast.success('Payment successful! Welcome to the premium club.');
+      });
+      // Remove payment param from URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('payment');
+      setSearchParams(newParams);
+    } else if (paymentStatus === 'canceled') {
+      import('sonner').then(({ toast }) => {
+        toast.error('Payment canceled. No worries, you can try again anytime.');
+      });
+      // Remove payment param from URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('payment');
+      setSearchParams(newParams);
+    }
+  }, [searchParams, setSearchParams]);
+
   const handleCloseAuthModal = () => {
     setIsAuthModalOpen(false);
     // Remove auth_mode from URL without refreshing

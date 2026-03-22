@@ -52,7 +52,7 @@ Stripe provides a **Test Mode** that allows you to simulate payments without usi
     - Copy the key immediately (it starts with `sk-...`). Paste it into your `.env` file for `OPENAI_API_KEY`.
 3.  **Configure the Model**:
     - In your code, you can now specify the model you wish to use (e.g., `gpt-4o`, `gpt-4-turbo`, etc.). 
-    - *Note: As of now, `gpt-5-nano` is not a publicly released model name. If you have been granted early access, check your organization's documentation for the exact ID.*
+    - *Note: The application currently uses the `gpt-4o-mini` model. You can change this in `backend/src/services/openai.service.js`.*
 
 ---
 

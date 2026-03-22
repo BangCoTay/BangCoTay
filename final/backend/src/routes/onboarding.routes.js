@@ -14,10 +14,6 @@ const createOnboardingSchema = Joi.object({
     .items(
       Joi.string().valid('time', 'energy', 'confidence', 'sleep', 'relationships', 'money')
     )
-    .min(1)
-    .required(),
-  healthyHabit: Joi.string()
-    .valid('reading', 'workout', 'meditation', 'learning', 'journaling', 'sleep', 'none')
     .required(),
 });
 

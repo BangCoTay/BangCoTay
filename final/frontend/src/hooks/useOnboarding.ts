@@ -26,7 +26,6 @@ export function useSubmitOnboarding() {
         addiction: data.addiction,
         severity: data.severity,
         painPoints: data.painPoints,
-        healthyHabit: data.healthyHabit,
       });
       return response.data.data;
     },

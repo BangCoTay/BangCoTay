@@ -52,7 +52,7 @@ Stripe cung cấp **Test Mode** cho phép bạn giả lập thanh toán mà khô
     - Sao chép khóa ngay lập tức (khóa bắt đầu bằng `sk-...`). Dán nó vào tệp `.env` cho biến `OPENAI_API_KEY`.
 3.  **Cấu hình Model**:
     - Trong code của bạn, bây giờ bạn có thể chỉ định model muốn sử dụng (ví dụ: `gpt-4o`, `gpt-4-turbo`, v.v.).
-    - *Lưu ý: Hiện tại, `gpt-5-nano` chưa phải là tên model được phát hành công khai. Nếu bạn đã được cấp quyền truy cập sớm, hãy kiểm tra tài liệu của tổ chức bạn để biết chính xác ID.*
+    - *Lưu ý: Hiện tại ứng dụng đang sử dụng model `gpt-4o-mini`. Bạn có thể thay đổi model này trong file `backend/src/services/openai.service.js`.*
 
 ---
 

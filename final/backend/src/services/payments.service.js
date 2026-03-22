@@ -27,23 +27,30 @@ const createCheckout = async (userId, { priceId, tier }) => {
     throw error;
   }
 
-  const user = await User.findById(userId).select('email');
+  const user = await User.findById(userId).select('email stripe_customer_id');
   if (!user) {
     const error = new Error('User not found');
     error.statusCode = 400;
     throw error;
   }
 
-  const session = await stripe.checkout.sessions.create({
-    customer_email: user.email,
+  const sessionData = {
     client_reference_id: userId,
-    mode: 'subscription',
+    mode: 'payment',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${config.frontendUrl}/dashboard?payment=success`,
     cancel_url: `${config.frontendUrl}/dashboard?payment=canceled`,
-    metadata: { userId, tier },
-  });
+    metadata: { userId, tier, priceId },
+  };
+
+  if (user.stripe_customer_id) {
+    sessionData.customer = user.stripe_customer_id;
+  } else {
+    sessionData.customer_email = user.email;
+  }
+
+  const session = await stripe.checkout.sessions.create(sessionData);
 
   return { checkoutUrl: session.url, sessionId: session.id };
 };
@@ -70,7 +77,13 @@ const handleWebhook = async (signature, payload) => {
   if (!stripe) throw new Error('Stripe not configured');
   if (!config.stripe.webhookSecret) throw new Error('Stripe webhook secret not configured');
 
-  const event = stripe.webhooks.constructEvent(payload, signature, config.stripe.webhookSecret);
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(payload, signature, config.stripe.webhookSecret);
+  } catch (err) {
+    console.error(`Webhook signature verification failed: ${err.message}`);
+    throw err;
+  }
 
   switch (event.type) {
     case 'checkout.session.completed':
@@ -97,42 +110,64 @@ const handleCheckoutCompleted = async (session) => {
   const userId = session.client_reference_id || session.metadata?.userId;
   const customerId = session.customer;
   const subscriptionId = session.subscription;
+  const tier = session.metadata?.tier || 'starter';
+  const priceId = session.metadata?.priceId;
 
   if (!userId) {
+    console.error('No userId found in session');
     return;
   }
 
   const user = await User.findById(userId).select('_id');
   if (!user) {
+    console.error(`User ${userId} not found`);
     return;
   }
 
   await User.findByIdAndUpdate(userId, { stripe_customer_id: customerId });
 
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  const priceId = subscription.items.data[0].price.id;
-  const tier = session.metadata?.tier || 'starter';
+  // If it's a subscription, retrieve more info
+  let status = 'active';
+  let current_period_start = new Date();
+  let current_period_end = null; // null for forever access
 
-  const allowedTiers = ['starter', 'premium'];
-  if (!allowedTiers.includes(tier)) {
-    return;
+  if (subscriptionId) {
+    try {
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      status = subscription.status;
+      current_period_start = new Date(subscription.current_period_start * 1000);
+      current_period_end = new Date(subscription.current_period_end * 1000);
+    } catch (err) {
+      console.error('Error retrieving subscription:', err);
+    }
   }
 
-  const expectedPriceId =
-    tier === 'starter' ? config.stripe.priceIdStarter : config.stripe.priceIdPremium;
-  if (expectedPriceId && priceId !== expectedPriceId) {
-    return;
-  }
+  const userSubscription = await Subscription.findOneAndUpdate(
+    { user_id: userId },
+    {
+      user_id: userId,
+      stripe_subscription_id: subscriptionId || null,
+      stripe_price_id: priceId || null,
+      tier,
+      status,
+      current_period_start,
+      current_period_end,
+    },
+    { upsert: true, new: true }
+  );
 
-  await Subscription.create({
-    user_id: userId,
-    stripe_subscription_id: subscriptionId,
-    stripe_price_id: priceId,
-    tier,
-    status: subscription.status,
-    current_period_start: new Date(subscription.current_period_start * 1000),
-    current_period_end: new Date(subscription.current_period_end * 1000),
-  });
+  // If it's a one-time payment, record the history now
+  if (!subscriptionId && session.payment_status === 'paid') {
+    await PaymentHistory.create({
+      user_id: userId,
+      subscription_id: userSubscription._id,
+      stripe_payment_intent_id: session.payment_intent,
+      amount: session.amount_total,
+      currency: session.currency,
+      status: 'succeeded',
+      payment_method: 'card',
+    });
+  }
 
   await User.findByIdAndUpdate(userId, { subscription_tier: tier });
 };
