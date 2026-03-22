@@ -24,9 +24,9 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+      <header className="flex-shrink-0 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -76,8 +76,8 @@ export function Dashboard() {
       </header>
 
       {/* Main content - 3 column layout */}
-      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 py-6">
-        <div className="grid lg:grid-cols-[3.5fr_5fr_3.5fr] gap-3 h-[calc(100vh-120px)]">
+      <main className="flex-1 min-h-0 max-w-[1800px] w-full mx-auto px-4 sm:px-6 py-6 overflow-hidden">
+        <div className="grid lg:grid-cols-[3.5fr_5fr_3.5fr] gap-3 h-full">
           {/* Left panel - AI Coach */}
           <motion.div
             className="h-full min-h-0 overflow-hidden"
@@ -90,7 +90,7 @@ export function Dashboard() {
 
           {/* Center panel - Plan */}
           <motion.div
-            className="h-full overflow-hidden"
+            className="h-full min-h-0 overflow-hidden"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -100,7 +100,7 @@ export function Dashboard() {
 
           {/* Right panel - Quotes */}
           <motion.div
-            className="h-full"
+            className="h-full min-h-0 overflow-hidden"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
