@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthContext } from '@/contexts/AuthContext';
 import type { ChatMessage } from '@/types';
 
 export interface SendMessageResponse {
@@ -78,7 +78,9 @@ function normalizeSendMessageResponse(raw: unknown): SendMessageResponse {
 }
 
 export function useChatMessages(role?: string, limit = 50, offset = 0) {
-  const { userId, isLoaded } = useAuth();
+  const { user, isLoading } = useAuthContext();
+  const userId = user?.id;
+  const isLoaded = !isLoading;
   return useQuery({
     queryKey: ['chat', 'messages', role ?? 'all', { limit, offset }],
     queryFn: async () => {

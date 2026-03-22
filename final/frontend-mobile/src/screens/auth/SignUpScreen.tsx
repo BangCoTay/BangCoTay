@@ -94,7 +94,9 @@ export function SignUpScreen() {
                 />
               </View>
               <Text style={styles.logo}>Check your email</Text>
-              <Text style={styles.subtitle}>We sent a verification code to</Text>
+              <Text style={styles.subtitle}>
+                We sent a verification code to
+              </Text>
               <Text style={styles.emailText}>{email}</Text>
             </MotiView>
 
@@ -108,7 +110,11 @@ export function SignUpScreen() {
                   <View style={styles.inputGroup}>
                     <Text style={styles.label}>Verification Code</Text>
                     <View style={styles.inputContainer}>
-                      <KeyRound color={colors.primary} size={20} style={styles.inputIcon} />
+                      <KeyRound
+                        color={colors.primary}
+                        size={20}
+                        style={styles.inputIcon}
+                      />
                       <TextInput
                         style={styles.input}
                         placeholder="Enter 6-digit code"
@@ -130,7 +136,10 @@ export function SignUpScreen() {
                       colors={[colors.primary, colors.primaryDark]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
-                      style={[styles.button, (loading || code.length < 6) && styles.buttonDisabled]}
+                      style={[
+                        styles.button,
+                        (loading || code.length < 6) && styles.buttonDisabled,
+                      ]}
                     >
                       {loading ? (
                         <ActivityIndicator color="#fff" />
@@ -157,7 +166,7 @@ export function SignUpScreen() {
         colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
         style={StyleSheet.absoluteFillObject}
       />
-      
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -193,7 +202,11 @@ export function SignUpScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Email Address</Text>
                   <View style={styles.inputContainer}>
-                    <Mail color={colors.primary} size={20} style={styles.inputIcon} />
+                    <Mail
+                      color={colors.primary}
+                      size={20}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your email"
@@ -210,7 +223,11 @@ export function SignUpScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Password</Text>
                   <View style={styles.inputContainer}>
-                    <Lock color={colors.primary} size={20} style={styles.inputIcon} />
+                    <Lock
+                      color={colors.primary}
+                      size={20}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.input}
                       placeholder="Create a secure password"
@@ -232,7 +249,10 @@ export function SignUpScreen() {
                     colors={[colors.primary, colors.primaryDark]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={[styles.button, (loading || !email || !password) && styles.buttonDisabled]}
+                    style={[
+                      styles.button,
+                      (loading || !email || !password) && styles.buttonDisabled,
+                    ]}
                   >
                     {loading ? (
                       <ActivityIndicator color="#fff" />

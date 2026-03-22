@@ -52,7 +52,7 @@ export function SignInScreen() {
         colors={[colors.background, colors.backgroundSecondary, "#E0F2FE"]}
         style={StyleSheet.absoluteFillObject}
       />
-      
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -88,7 +88,11 @@ export function SignInScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Email Address</Text>
                   <View style={styles.inputContainer}>
-                    <Mail color={colors.primary} size={20} style={styles.inputIcon} />
+                    <Mail
+                      color={colors.primary}
+                      size={20}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your email"
@@ -105,7 +109,11 @@ export function SignInScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Password</Text>
                   <View style={styles.inputContainer}>
-                    <Lock color={colors.primary} size={20} style={styles.inputIcon} />
+                    <Lock
+                      color={colors.primary}
+                      size={20}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your password"

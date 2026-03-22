@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 export interface TaskData {
   id: string;

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 export interface Progress {
   currentDay: number;
@@ -29,7 +29,9 @@ export interface Analytics {
 }
 
 export function useProgress() {
-  const { userId, isLoaded } = useAuth();
+  const { user, isLoading } = useAuthContext();
+  const userId = user?.id;
+  const isLoaded = !isLoading;
   return useQuery({
     queryKey: ['progress'],
     queryFn: async () => {
@@ -41,7 +43,9 @@ export function useProgress() {
 }
 
 export function useAnalytics(days: number = 7) {
-  const { userId, isLoaded } = useAuth();
+  const { user, isLoading } = useAuthContext();
+  const userId = user?.id;
+  const isLoaded = !isLoading;
   return useQuery({
     queryKey: ['progress', 'analytics', days],
     queryFn: async () => {

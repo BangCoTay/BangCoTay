@@ -8,8 +8,14 @@ import Toast from "react-native-toast-message";
 import * as SecureStore from "expo-secure-store";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RootNavigator } from "@/navigation/RootNavigator";
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
-import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
+import * as SplashScreen from "expo-splash-screen";
 
 SplashScreen.preventAutoHideAsync();
 

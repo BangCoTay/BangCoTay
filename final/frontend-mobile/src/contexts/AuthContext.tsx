@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth, useUser } from '@clerk/clerk-expo';
-import apiClient, { setTokenGetter } from '@/lib/api-client';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useAuth, useUser } from "@clerk/clerk-expo";
+import apiClient, { setTokenGetter } from "@/lib/api-client";
 
 interface User {
   id: string;
@@ -34,12 +34,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isLoaded && userId && !isSyncing) {
       setIsSyncing(true);
       try {
-        const { data } = await apiClient.post('/auth/sync');
+        const { data } = await apiClient.post("/auth/sync");
         if (data.success) {
           setDbUser(data.data.user);
         }
       } catch (error) {
-        console.error('Failed to sync user with backend:', error);
+        console.error("Failed to sync user with backend:", error);
       } finally {
         setIsSyncing(false);
       }
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuthContext() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
+    throw new Error("useAuthContext must be used within an AuthProvider");
   }
   return context;
 }

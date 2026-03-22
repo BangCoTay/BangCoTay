@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 interface RawPlanTask {
   id?: string;
@@ -46,7 +46,9 @@ function normalizeCurrentPlanResponse(raw: unknown): any {
 }
 
 export function useCurrentPlan() {
-  const { userId, isLoaded } = useAuth();
+  const { user, isLoading } = useAuthContext();
+  const userId = user?.id;
+  const isLoaded = !isLoading;
   return useQuery({
     queryKey: ['plans', 'current'],
     queryFn: async () => {

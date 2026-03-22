@@ -4,20 +4,20 @@ const User = require('../models/User');
 const auth = async (req, res, next) => {
   try {
     const { userId } = getAuth(req);
-    
+
     if (!userId) {
       return res.status(401).json({ success: false, error: 'Unauthenticated' });
     }
 
     // Find user in our database by clerk_id
     let user = await User.findOne({ clerk_id: userId });
-    
+
     // Fallback: If not found by clerk_id, try to find by email and link them
     if (!user) {
       try {
         const clerkUser = await clerkClient.users.getUser(userId);
         const email = clerkUser.emailAddresses[0]?.emailAddress;
-        
+
         if (email) {
           user = await User.findOne({ email });
           if (user) {
