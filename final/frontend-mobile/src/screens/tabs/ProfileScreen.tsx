@@ -52,7 +52,7 @@ export function ProfileScreen() {
   const isFree = tier === "free";
   const avatarInitial = (profile?.fullName ||
     profile?.email ||
-    "?")[0].toUpperCase();
+    "U")[0]?.toUpperCase() ?? "U";
 
   if (isLoading) {
     return (

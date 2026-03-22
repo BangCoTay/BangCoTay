@@ -20,6 +20,7 @@ import { MotiView, AnimatePresence } from "moti";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react-native";
+import Toast from "react-native-toast-message";
 
 const { width } = Dimensions.get("window");
 
@@ -115,6 +116,11 @@ export function OnboardingScreen() {
           console.error("Onboarding submission error:", error);
           setCurrentStepIndex(7);
           setIsSubmitting(false);
+          Toast.show({
+            type: "error",
+            text1: "Failed to create plan",
+            text2: "Please try again",
+          });
         }
       })();
     }
@@ -419,7 +425,7 @@ export function OnboardingScreen() {
                     colors={[colors.primary, colors.primaryDark]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={styles.continueButtonGradient}
+                    style={styles.continueButton}
                   >
                     <Text style={styles.continueButtonText}>Continue</Text>
                     <ArrowRight color="#fff" size={20} />
@@ -481,7 +487,7 @@ export function OnboardingScreen() {
                     colors={[colors.primary, colors.primaryDark]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={styles.startButtonGradient}
+                    style={styles.startButton}
                   >
                     <Text style={styles.startButtonText}>Let's Do This!</Text>
                     <ArrowRight color="#fff" size={20} />

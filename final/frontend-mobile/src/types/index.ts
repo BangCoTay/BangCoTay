@@ -46,10 +46,14 @@ export interface ChatMessage {
 
 export interface Quote {
   id: string;
+  text?: string;
   content: string;
+  author?: string;
   category: 'emotional' | 'practical';
   isActive: boolean;
+  is_active?: boolean;
   createdAt: string;
+  created_at?: string;
 }
 
 export interface CoachInfo {
@@ -217,4 +221,73 @@ export const CONGRATULATION_MESSAGES = [
   "✨ Progress, not perfection. And you're making progress!",
   "🏆 Another task crushed! Your future self is grateful.",
   "💎 Consistency is your superpower. You're proving it!",
+];
+
+export const GIRLFRIEND_MESSAGES = [
+  "I knew you could do it! So proud of you ❤️",
+  "You're amazing, keep going! 💕",
+  "My favorite person doing amazing things! 🥰",
+  "You make me so happy watching you grow! 😍",
+  "This is why I believe in you! Go you! 🌟",
+  "Your dedication is inspiring, baby! 💖",
+  "One step at a time, and you're crushing it! 🎯",
+  "I'm so lucky to have someone this determined! 😘",
+  "Your progress makes my heart full! ❤️",
+  "Keep being incredible, my love! ✨",
+  "You make everything look so good! I'm impressed! 😎",
+  "This is just the beginning - you're unstoppable! 🚀",
+  "I'm rooting for you every single day! 🙌",
+  "Your hard work is paying off, I can see it! 💯",
+  "You inspire me to be better too! 🌈",
+  "Such a strong person - I'm in awe! 💪",
+  "Every small victory matters, and you're winning! 🏆",
+  "The way you keep going is amazing! 🔥",
+  "I love watching you become the best version of yourself! 💗",
+  "You have no idea how proud I am right now! 🎉",
+];
+
+export const FRIEND_MESSAGES = [
+  "Bro, you're actually doing this! 🔥",
+  "Let's gooo! Keep that streak! 💪",
+  "You're built different fr fr 🚀",
+  "Bro that next level energy! 🎮",
+  "You're making moves, I respect that! 🙌",
+  "Gotta say, you're holding it down! 💯",
+  "This is your year bro, I can feel it! 🌟",
+  "One more down, you're unbeatable! 🏆",
+  "Bro you're on fire! Keep it burning! 🔥",
+  "That's what I like to see! 💪",
+  "You're making everyone proud fr! 👏",
+  "The grind is showing, respect! ⚡",
+  "Bro you're built for this! 💎",
+  "That's a W in my book! 📖",
+  "Keep that same energy! ✨",
+  "You're showing up fr! 🌟",
+  "This is the way! 🛤️",
+  "You're about to blow up! 💥",
+  "Real ones see the work you're putting in! 👀",
+  "Don't stop now, you're too close! 🎯",
+];
+
+export const FAMILY_MESSAGES = [
+  "We're so proud of you! Keep it up! 🙏",
+  "You're making great progress, sweetheart! ❤️",
+  "The whole family is cheering for you! 🎉",
+  "We always knew you had it in you! 🌟",
+  "This makes our hearts so full! 🥰",
+  "You're making us all proud, dear! 👨‍👩‍👧",
+  "Such determination, we admire that! 💪",
+  "You've always been so strong! 💎",
+  "This is what we hoped for you! 🎯",
+  "Our family is so lucky to have you! 🍀",
+  "Watching you grow is our joy! 🌱",
+  "You make our family shine! ✨",
+  "Keep going, we're right behind you! 👏",
+  "This is just the beginning, we can feel it! 🌅",
+  "Your hard work is inspiring us all! 🔥",
+  "We believe in you completely! 💯",
+  "You're making your ancestors proud! 🙏",
+  "This is a beautiful journey to watch! 🌈",
+  "Our family is stronger because of you! 💪",
+  "You're proving that dreams come true! ⭐",
 ];

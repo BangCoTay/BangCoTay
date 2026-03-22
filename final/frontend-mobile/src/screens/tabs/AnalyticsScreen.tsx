@@ -12,7 +12,7 @@ import { colors, spacing, borderRadius, fontSize, typography } from "@/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { MotiView } from "moti";
-import { Flame, CheckCircle, BarChart2, MessageCircle } from "lucide-react-native";
+import { Flame, CheckCircle, BarChart2, MessageCircle, TrendingUp } from "lucide-react-native";
 
 interface WeekProgress {
   week: number;
@@ -147,7 +147,7 @@ export function AnalyticsScreen() {
         )}
 
         {/* Streak History */}
-        {recentStreak.length > 0 && (
+        {recentStreak.length > 0 ? (
           <MotiView
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -176,6 +176,19 @@ export function AnalyticsScreen() {
                   </View>
                 ))}
               </View>
+            </BlurView>
+          </MotiView>
+        ) : (
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 700 }}
+            style={styles.section}
+          >
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <BlurView intensity={40} tint="light" style={styles.emptyCard}>
+              <Flame size={32} color={colors.textTertiary} />
+              <Text style={styles.emptyText}>Start your streak by completing daily tasks</Text>
             </BlurView>
           </MotiView>
         )}
