@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Send, Sparkles } from "lucide-react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { useChatMessages, useSendMessage } from "@/hooks/useChat";
 import { useUserSubscription } from "@/hooks/useUsers";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -96,8 +97,17 @@ export function AICoachScreen() {
   const sendMessage = useSendMessage();
   const { data: subscription } = useUserSubscription();
   const { data: onboarding } = useOnboarding();
-
   const allMessages = chatData?.messages ?? [];
+
+  useFocusEffect(
+    useCallback(() => {
+      // Small delay to ensure measurements are correct after layout
+      const timer = setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+      return () => clearTimeout(timer);
+    }, []),
+  );
   const messages = allMessages.filter((msg) => {
     if (activePersona === "coach")
       return msg.role === "user" || msg.role === "assistant";

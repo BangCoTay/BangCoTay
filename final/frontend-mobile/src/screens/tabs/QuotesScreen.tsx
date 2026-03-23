@@ -70,7 +70,8 @@ export function QuotesScreen() {
   const remaining = quotesData?.regenerationsRemaining ?? null;
 
   const handleRegenerate = async () => {
-    if (remaining !== null && remaining <= 0) {
+    const isUnlimited = subscription?.tier === "starter" || subscription?.tier === "premium";
+    if (!isUnlimited && remaining !== null && remaining <= 0) {
       navigation.navigate("Upgrade");
       return;
     }
@@ -143,7 +144,7 @@ export function QuotesScreen() {
           </TouchableOpacity>
         </MotiView>
 
-        {remaining !== null && (
+        {remaining !== null && subscription?.tier !== "starter" && subscription?.tier !== "premium" && (
           <MotiView
             from={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}

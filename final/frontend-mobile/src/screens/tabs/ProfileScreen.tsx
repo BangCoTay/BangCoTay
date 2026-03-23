@@ -287,11 +287,6 @@ export function ProfileScreen() {
               ]}
             >
               <View style={styles.menuItem}>
-                <BlurView
-                  intensity={40}
-                  tint="light"
-                  style={StyleSheet.absoluteFillObject}
-                />
                 <LogOut size={22} color={colors.error} />
                 <Text style={[styles.menuItemText, { color: colors.error }]}>
                   Sign Out
@@ -506,7 +501,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.6)",
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
   menuItemText: {
     fontSize: fontSize.md,
