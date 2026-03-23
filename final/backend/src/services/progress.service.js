@@ -17,7 +17,7 @@ const getProgress = async (userId) => {
 
   return {
     currentDay: progress.current_day,
-    totalTasksCompleted: progress.total_tasks_completed,
+    totalTasksCompleted: completedTasks,
     streakDays: progress.streak_days,
     completionRate: Math.round(completionRate),
     aiMessagesUsed: progress.ai_messages_used,

@@ -19,9 +19,25 @@ app.use(clerkMiddleware({
 app.use(helmet());
 
 // CORS
+const allowedOrigins = [
+  'http://localhost:8080',
+  'http://localhost:8081',
+  'http://localhost:19000',
+  'http://localhost:19006',
+  config.frontendUrl,
+];
+
 app.use(
   cors({
-    origin: config.frontendUrl,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost:')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );

@@ -41,4 +41,18 @@ router.get('/subscription', auth, async (req, res, next) => {
   }
 });
 
+const upgradeFakeSchema = Joi.object({
+  tier: Joi.string().valid('free', 'starter', 'premium').required(),
+});
+
+// POST /users/upgrade-fake
+router.post('/upgrade-fake', auth, validate(upgradeFakeSchema), async (req, res, next) => {
+  try {
+    const result = await usersService.upgradeTier(req.user.id, req.body.tier);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

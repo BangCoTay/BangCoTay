@@ -53,4 +53,18 @@ const getSubscription = async (userId) => {
   };
 };
 
-module.exports = { getProfile, updateProfile, getSubscription };
+const upgradeTier = async (userId, tier) => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { subscription_tier: tier },
+    { new: true }
+  );
+  if (!user) {
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return user.toJSON();
+};
+
+module.exports = { getProfile, updateProfile, getSubscription, upgradeTier };

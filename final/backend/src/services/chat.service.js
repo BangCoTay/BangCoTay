@@ -95,17 +95,18 @@ const getMessages = async (userId, role, limit = 50, offset = 0) => {
   // Build filter - optionally filter by role (for persona-specific feeds)
   const filter = { user_id: userId };
 
-  if (role === 'coach') {
+  const r = (role || 'coach').toLowerCase();
+
+  if (r === 'coach') {
     // AI Coach feed: user messages + assistant messages
     filter.role = { $in: ['user', 'assistant'] };
-  } else if (role === 'friend') {
+  } else if (r === 'friend') {
     filter.role = 'friend';
-  } else if (role === 'family') {
+  } else if (r === 'family') {
     filter.role = 'family';
-  } else if (role === 'girlfriend') {
+  } else if (r === 'girlfriend') {
     filter.role = 'girlfriend';
   }
-  // If no role specified, return all messages (backward compat)
 
   const total = await ChatMessage.countDocuments(filter);
   const messages = await ChatMessage.find(filter)

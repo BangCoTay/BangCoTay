@@ -205,6 +205,16 @@ const uncompleteTask = async (userId, taskId) => {
   task.completed_at = null;
   await task.save();
 
+  // Update progress
+  const progress = await UserProgress.findOne({
+    user_id: userId,
+  });
+
+  if (progress && progress.total_tasks_completed > 0) {
+    progress.total_tasks_completed -= 1;
+    await progress.save();
+  }
+
   return { task, message: 'Task marked as incomplete' };
 };
 
