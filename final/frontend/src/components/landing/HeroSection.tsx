@@ -1,8 +1,14 @@
-import { motion } from 'framer-motion';
-import { useAppStore } from '@/store/appStore';
-import { useAuthContext } from '@/contexts/AuthContext';
-import { useSearchParams } from 'react-router-dom';
-import { ArrowRight, Play, CheckCircle2, Sparkles, MessageCircle } from 'lucide-react';
+import { motion } from "framer-motion";
+import { useAppStore } from "@/store/appStore";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useSearchParams } from "react-router-dom";
+import {
+  ArrowRight,
+  Play,
+  CheckCircle2,
+  Sparkles,
+  MessageCircle,
+} from "lucide-react";
 
 export function HeroSection() {
   const { setCurrentView } = useAppStore();
@@ -11,16 +17,16 @@ export function HeroSection() {
 
   const handleStart = () => {
     if (isAuthenticated) {
-      setCurrentView('onboarding');
+      setCurrentView("onboarding");
       return;
     }
-    setSearchParams({ auth_mode: 'signup' });
+    setSearchParams({ auth_mode: "signup" });
   };
 
   const scrollToHowItWorks = () => {
-    const element = document.getElementById('how-it-works');
+    const element = document.getElementById("how-it-works");
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -30,7 +36,7 @@ export function HeroSection() {
       <div className="absolute inset-0 overflow-hidden">
         {/* Gradient Mesh */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-        
+
         {/* Floating Orbs */}
         <motion.div
           className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-primary/20 to-primary/5 blur-3xl"
@@ -83,16 +89,17 @@ export function HeroSection() {
 
               {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-[1.1] mb-6">
-                <span className="text-foreground">Quit bad habits.</span>
+                <span className="text-foreground">Overcome addictions</span>
                 <br />
-                <span className="text-gradient-hero">Build better ones.</span>
+                <span className="text-gradient-hero">Reclaim your life</span>
                 <br />
                 <span className="text-foreground">In just 30 days.</span>
               </h1>
 
               {/* Subheadline */}
               <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8">
-                A personal AI coach that helps you break addiction and replace it with healthier habits — one day at a time.
+                A personal AI coach that helps you break addiction and replace
+                it with healthier habits — one day at a time.
               </p>
 
               {/* CTAs */}
@@ -106,7 +113,7 @@ export function HeroSection() {
                   Start your 30-day reset
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </motion.button>
-                
+
                 <motion.button
                   onClick={scrollToHowItWorks}
                   className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl border-2 border-border hover:border-primary/50 text-foreground font-medium transition-all hover:bg-secondary"
@@ -156,11 +163,15 @@ export function HeroSection() {
                 >
                   <CheckCircle2 className="w-6 h-6 text-success" />
                   <div className="flex-1">
-                    <p className="font-medium text-foreground">No social media until noon</p>
-                    <p className="text-sm text-muted-foreground">Completed at 9:30 AM</p>
+                    <p className="font-medium text-foreground">
+                      No social media until noon
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Completed at 9:30 AM
+                    </p>
                   </div>
                 </motion.div>
-                
+
                 <motion.div
                   className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border"
                   initial={{ x: 20, opacity: 0 }}
@@ -169,8 +180,12 @@ export function HeroSection() {
                 >
                   <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30" />
                   <div className="flex-1">
-                    <p className="font-medium text-foreground">10-minute meditation</p>
-                    <p className="text-sm text-muted-foreground">Build your mindfulness habit</p>
+                    <p className="font-medium text-foreground">
+                      10-minute meditation
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Build your mindfulness habit
+                    </p>
                   </div>
                 </motion.div>
               </div>
@@ -185,7 +200,7 @@ export function HeroSection() {
                   <motion.div
                     className="progress-bar-fill"
                     initial={{ width: 0 }}
-                    animate={{ width: '72%' }}
+                    animate={{ width: "72%" }}
                     transition={{ delay: 1.2, duration: 1 }}
                   />
                 </div>
@@ -205,7 +220,9 @@ export function HeroSection() {
                 </div>
                 <div>
                   <p className="text-sm font-medium">AI Coach</p>
-                  <p className="text-xs text-muted-foreground">Great progress! Keep it up! 🔥</p>
+                  <p className="text-xs text-muted-foreground">
+                    Great progress! Keep it up! 🔥
+                  </p>
                 </div>
               </div>
             </motion.div>

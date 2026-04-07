@@ -1,5 +1,0 @@
-﻿src/hooks/useAuth.ts(23,11): error TS2339: Property 'resetApp' does not exist on type 'AppState'.
-src/hooks/useAuth.ts(23,21): error TS2339: Property 'setCurrentView' does not exist on type 'AppState'.
-src/lib/api-client.ts(3,34): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
-src/lib/utils.ts(2,25): error TS2307: Cannot find module 'tailwind-merge' or its corresponding type declarations.
-src/screens/tabs/QuotesScreen.tsx(12,60): error TS18048: 'regenerationsRemaining' is possibly 'undefined'.
