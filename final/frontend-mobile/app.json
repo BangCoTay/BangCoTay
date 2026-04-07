@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Resetify",
+    "slug": "resetify",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0D9488"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.resetify.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0D9488"
+      },
+      "package": "com.resetify.app"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-asset",
+      "expo-font"
+    ],
+    "scheme": "resetify"
+  }
+}
